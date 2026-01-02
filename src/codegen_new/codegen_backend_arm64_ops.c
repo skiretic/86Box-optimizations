@@ -198,6 +198,9 @@
 #    define OPCODE_STR_REG_F32        (0xbc206800)
 #    define OPCODE_STR_REG_F64        (0xfc206800)
 #    define OPCODE_STR_REG_F64_S      (0xfc207800)
+#    define OPCODE_TBX1_V8B           (0x0e001000)
+#    define OPCODE_BSL_V8B            (0x2e601c00)
+#    define OPCODE_NOT_V8B            (0x2e205800)
 #    define OPCODE_SUB_V8B            (0x2e208400)
 #    define OPCODE_SUB_V4H            (0x2e608400)
 #    define OPCODE_SUB_V2S            (0x2ea08400)
@@ -1294,6 +1297,24 @@ host_arm64_STP_PREIDX_X(codeblock_t *block, int src_reg1, int src_reg2, int base
     if (!in_range7_x(offset))
         fatal("host_arm64_STP_PREIDX out of range7 %i\n", offset);
     codegen_addlong(block, OPCODE_STP_PREIDX_X | IMM7_X(offset) | Rn(base_reg) | Rt(src_reg1) | Rt2(src_reg2));
+}
+
+void
+host_arm64_TBX1_V8B(codeblock_t *block, int dst_reg, int src_n_reg, int src_m_reg)
+{
+    codegen_addlong(block, OPCODE_TBX1_V8B | Rd(dst_reg) | Rn(src_n_reg) | Rm(src_m_reg));
+}
+
+void
+host_arm64_BSL_V8B(codeblock_t *block, int dst_reg, int src_n_reg, int src_m_reg)
+{
+    codegen_addlong(block, OPCODE_BSL_V8B | Rd(dst_reg) | Rn(src_n_reg) | Rm(src_m_reg));
+}
+
+void
+host_arm64_NOT_V8B(codeblock_t *block, int dst_reg, int src_reg)
+{
+    codegen_addlong(block, OPCODE_NOT_V8B | Rd(dst_reg) | Rn(src_reg));
 }
 
 void

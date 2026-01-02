@@ -108,6 +108,62 @@ jobs:
       - name: Build
         run: cmake --build build
 
+      - name: Build NEON benchmark
+        if: matrix.environment.arch == 'arm64'
+        run: cmake --build build --target mmx_neon_micro
+
+      - name: Run NEON benchmark
+        if: matrix.environment.arch == 'arm64'
+        run: |
+          build/benchmarks/mmx_neon_micro.app/Contents/MacOS/mmx_neon_micro --iters=10000000 --impl=neon | tee mmx_neon_micro.log
+
+      - name: Parse NEON benchmark log
+        if: matrix.environment.arch == 'arm64'
+        run: |
+          python3 tools/parse_mmx_neon_log.py mmx_neon_micro.log --output mmx_neon_micro.json --min-ratio 0.5
+
+      - name: Upload NEON log
+        if: matrix.environment.arch == 'arm64'
+        uses: actions/upload-artifact@v4
+        with:
+          name: 'mmx_neon_micro-log-${{ github.run_number }}'
+          path: mmx_neon_micro.log
+
+      - name: Upload NEON metrics
+        if: matrix.environment.arch == 'arm64'
+        uses: actions/upload-artifact@v4
+        with:
+          name: 'mmx_neon_micro-metrics-${{ github.run_number }}'
+          path: mmx_neon_micro.json
+
+      - name: Build dynarec benchmark
+        if: matrix.environment.arch == 'arm64'
+        run: cmake --build build --target dynarec_micro
+
+      - name: Run dynarec benchmark
+        if: matrix.environment.arch == 'arm64'
+        run: |
+          build/benchmarks/dynarec_micro.app/Contents/MacOS/dynarec_micro --iters=10000000 --impl=neon | tee dynarec_micro.log
+
+      - name: Parse dynarec benchmark log
+        if: matrix.environment.arch == 'arm64'
+        run: |
+          python3 tools/parse_mmx_neon_log.py dynarec_micro.log --output dynarec_micro.json
+
+      - name: Upload dynarec log
+        if: matrix.environment.arch == 'arm64'
+        uses: actions/upload-artifact@v4
+        with:
+          name: 'dynarec_micro-log-${{ github.run_number }}'
+          path: dynarec_micro.log
+
+      - name: Upload dynarec metrics
+        if: matrix.environment.arch == 'arm64'
+        uses: actions/upload-artifact@v4
+        with:
+          name: 'dynarec_micro-metrics-${{ github.run_number }}'
+          path: dynarec_micro.json
+
       - name: Generate package
         run: cmake --install build
 

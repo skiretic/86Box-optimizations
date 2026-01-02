@@ -200,6 +200,12 @@ void host_arm64_SSHR_V4H(codeblock_t *block, int dst_reg, int src_reg, int shift
 void host_arm64_SSHR_V2S(codeblock_t *block, int dst_reg, int src_reg, int shift);
 void host_arm64_SSHR_V2D(codeblock_t *block, int dst_reg, int src_reg, int shift);
 
+void host_arm64_TBX1_V8B(codeblock_t *block, int dst_reg, int src_n_reg, int src_m_reg);
+
+void host_arm64_BSL_V8B(codeblock_t *block, int dst_reg, int src_n_reg, int src_m_reg);
+
+void host_arm64_NOT_V8B(codeblock_t *block, int dst_reg, int src_reg);
+
 void host_arm64_STP_PREIDX_X(codeblock_t *block, int src_reg1, int src_reg2, int base_reg, int offset);
 
 void host_arm64_STR_IMM_W(codeblock_t *block, int dest_reg, int base_reg, int offset);

@@ -1,6 +1,12 @@
 #ifndef _CODEGEN_BACKEND_H_
 #define _CODEGEN_BACKEND_H_
 
+#ifndef NEW_DYNAREC_BACKEND
+#    ifdef USE_NEW_DYNAREC
+#        define NEW_DYNAREC_BACKEND
+#    endif
+#endif
+
 #if defined __amd64__ || defined _M_X64
 #    include "codegen_backend_x86-64.h"
 #elif defined __aarch64__ || defined _M_ARM64
@@ -8,6 +14,25 @@
 #else
 #    error New dynamic recompiler not implemented on your platform
 #endif
+
+typedef enum codegen_backend_kind {
+    BACKEND_UNKNOWN = 0,
+    BACKEND_X86_64,
+    BACKEND_ARM64_GENERIC,
+    BACKEND_ARM64_APPLE
+} codegen_backend_kind_t;
+
+extern codegen_backend_kind_t dynarec_backend;
+
+static inline int
+codegen_backend_is_apple_arm64(void)
+{
+#if defined(__APPLE__) && defined(__aarch64__) && defined(NEW_DYNAREC_BACKEND)
+    return dynarec_backend == BACKEND_ARM64_APPLE;
+#else
+    return 0;
+#endif
+}
 
 void codegen_backend_init(void);
 void codegen_backend_prologue(codeblock_t *block);

@@ -65,6 +65,7 @@ endif()
 
 if(NEW_DYNAREC)
     add_compile_definitions(USE_NEW_DYNAREC)
+    add_compile_definitions(NEW_DYNAREC_BACKEND)
 endif()
 
 if(RELEASE)

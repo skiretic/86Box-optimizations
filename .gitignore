@@ -7,7 +7,6 @@ Makefile
 *.a
 /src/*.exe
 /src/86Box
-/src/include/86box/version.h
 /src/.vs
 /src/out
 
@@ -67,3 +66,6 @@ CMakeLists.txt.user
 
 # Jetbrains CLion
 .idea
+SESSION_SUMMARY.md
+build/
+dist/

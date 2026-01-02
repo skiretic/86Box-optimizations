@@ -110,6 +110,7 @@
 #define REG_TEMP2            REG_X6
 
 #define REG_V_TEMP           REG_V0
+#define REG_V_TEMP2          REG_V1
 
 #define CODEGEN_HOST_REGS    10
 #define CODEGEN_HOST_FP_REGS 8

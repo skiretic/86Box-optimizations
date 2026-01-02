@@ -298,33 +298,35 @@
 #define UOP_PMULHW (UOP_TYPE_PARAMS_REGS | 0xb8)
 /*UOP_PMADDWD - (packed word) dest_reg = (src_reg_a * src_reg_b) >> 16*/
 #define UOP_PMADDWD (UOP_TYPE_PARAMS_REGS | 0xb9)
+/*UOP_PSHUFB - shuffle bytes using src_reg_b as indices*/
+#define UOP_PSHUFB (UOP_TYPE_PARAMS_REGS | 0xba)
 
 /*UOP_PFADD - (packed float) dest_reg = src_reg_a + src_reg_b*/
-#define UOP_PFADD (UOP_TYPE_PARAMS_REGS | 0xba)
+#define UOP_PFADD (UOP_TYPE_PARAMS_REGS | 0xbb)
 /*UOP_PFSUB - (packed float) dest_reg = src_reg_a - src_reg_b*/
-#define UOP_PFSUB (UOP_TYPE_PARAMS_REGS | 0xbb)
+#define UOP_PFSUB (UOP_TYPE_PARAMS_REGS | 0xbc)
 /*UOP_PFMUL - (packed float) dest_reg = src_reg_a * src_reg_b*/
-#define UOP_PFMUL (UOP_TYPE_PARAMS_REGS | 0xbc)
+#define UOP_PFMUL (UOP_TYPE_PARAMS_REGS | 0xbd)
 /*UOP_PFMAX - (packed float) dest_reg = MAX(src_reg_a, src_reg_b)*/
-#define UOP_PFMAX (UOP_TYPE_PARAMS_REGS | 0xbd)
+#define UOP_PFMAX (UOP_TYPE_PARAMS_REGS | 0xbe)
 /*UOP_PFMIN - (packed float) dest_reg = MIN(src_reg_a, src_reg_b)*/
-#define UOP_PFMIN (UOP_TYPE_PARAMS_REGS | 0xbe)
+#define UOP_PFMIN (UOP_TYPE_PARAMS_REGS | 0xbf)
 /*UOP_PFCMPEQ - (packed float) dest_reg = (src_reg_a == src_reg_b) ? ~0 : 0*/
-#define UOP_PFCMPEQ (UOP_TYPE_PARAMS_REGS | 0xbf)
+#define UOP_PFCMPEQ (UOP_TYPE_PARAMS_REGS | 0xc0)
 /*UOP_PFCMPGE - (packed float) dest_reg = (src_reg_a >= src_reg_b) ? ~0 : 0*/
-#define UOP_PFCMPGE (UOP_TYPE_PARAMS_REGS | 0xc0)
+#define UOP_PFCMPGE (UOP_TYPE_PARAMS_REGS | 0xc1)
 /*UOP_PFCMPGT - (packed float) dest_reg = (src_reg_a > src_reg_b) ? ~0 : 0*/
-#define UOP_PFCMPGT (UOP_TYPE_PARAMS_REGS | 0xc1)
+#define UOP_PFCMPGT (UOP_TYPE_PARAMS_REGS | 0xc2)
 /*UOP_PF2ID - (packed long)dest_reg = (packed float)src_reg_a*/
-#define UOP_PF2ID (UOP_TYPE_PARAMS_REGS | 0xc2)
+#define UOP_PF2ID (UOP_TYPE_PARAMS_REGS | 0xc3)
 /*UOP_PI2FD - (packed float)dest_reg = (packed long)src_reg_a*/
-#define UOP_PI2FD (UOP_TYPE_PARAMS_REGS | 0xc3)
+#define UOP_PI2FD (UOP_TYPE_PARAMS_REGS | 0xc4)
 /*UOP_PFRCP - (packed float) dest_reg[0] = dest_reg[1] = 1.0 / src_reg[0]*/
-#define UOP_PFRCP (UOP_TYPE_PARAMS_REGS | 0xc4)
+#define UOP_PFRCP (UOP_TYPE_PARAMS_REGS | 0xc5)
 /*UOP_PFRSQRT - (packed float) dest_reg[0] = dest_reg[1] = 1.0 / sqrt(src_reg[0])*/
-#define UOP_PFRSQRT (UOP_TYPE_PARAMS_REGS | 0xc5)
+#define UOP_PFRSQRT (UOP_TYPE_PARAMS_REGS | 0xc6)
 
-#define UOP_MAX     0xc6
+#define UOP_MAX     0xc7
 
 #define UOP_INVALID 0xff
 
@@ -839,6 +841,7 @@ extern int codegen_fp_enter(void);
 #define uop_PI2FD(ir, dst_reg, src_reg)                                  uop_gen_reg_dst_src1(UOP_PI2FD, ir, dst_reg, src_reg)
 
 #define uop_PMADDWD(ir, dst_reg, src_reg_a, src_reg_b)                   uop_gen_reg_dst_src2(UOP_PMADDWD, ir, dst_reg, src_reg_a, src_reg_b)
+#define uop_PSHUFB(ir, dst_reg, src_reg_a, src_reg_b)                    uop_gen_reg_dst_src2(UOP_PSHUFB, ir, dst_reg, src_reg_a, src_reg_b)
 #define uop_PMULHW(ir, dst_reg, src_reg_a, src_reg_b)                    uop_gen_reg_dst_src2(UOP_PMULHW, ir, dst_reg, src_reg_a, src_reg_b)
 #define uop_PMULLW(ir, dst_reg, src_reg_a, src_reg_b)                    uop_gen_reg_dst_src2(UOP_PMULLW, ir, dst_reg, src_reg_a, src_reg_b)
 

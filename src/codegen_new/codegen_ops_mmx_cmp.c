@@ -14,11 +14,12 @@
 #include "codegen_ir.h"
 #include "codegen_ops.h"
 #include "codegen_ops_mmx_cmp.h"
+#include "codegen_backend.h"
 #include "codegen_ops_helpers.h"
 
 #define ropPcmp(func)                                                                              \
-    uint32_t rop##func(codeblock_t *block, ir_data_t *ir, UNUSED(uint8_t opcode),                  \
-                       uint32_t fetchdat, uint32_t op_32, uint32_t op_pc)                          \
+    static inline uint32_t rop##func##_impl(codeblock_t *block, ir_data_t *ir,                     \
+                                            uint32_t fetchdat, uint32_t op_32, uint32_t op_pc)     \
     {                                                                                              \
         int dest_reg = (fetchdat >> 3) & 7;                                                        \
                                                                                                    \
@@ -38,6 +39,13 @@
         }                                                                                          \
                                                                                                    \
         return op_pc + 1;                                                                          \
+    }                                                                                              \
+    uint32_t rop##func(codeblock_t *block, ir_data_t *ir, UNUSED(uint8_t opcode),                  \
+                       uint32_t fetchdat, uint32_t op_32, uint32_t op_pc)                          \
+    {                                                                                              \
+        if (codegen_backend_is_apple_arm64())                                                      \
+            return rop##func##_impl(block, ir, fetchdat, op_32, op_pc);                            \
+        return rop##func##_impl(block, ir, fetchdat, op_32, op_pc);                                \
     }
 
 // clang-format off

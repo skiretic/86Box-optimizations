@@ -1,0 +1,11 @@
+{
+  "source": "build/logs/dynarec_micro.log",
+  "ratios": {
+    "DYN_PADDB": 1.07,
+    "DYN_PSUBB": 8.31,
+    "DYN_PADDUSB": 0.76,
+    "DYN_PADDSW": 286.84,
+    "DYN_PMULLW": 1.69,
+    "DYN_PMULH": 1.99
+  }
+}

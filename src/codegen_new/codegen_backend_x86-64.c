@@ -26,6 +26,8 @@
 #    endif
 #    include <string.h>
 
+codegen_backend_kind_t dynarec_backend = BACKEND_X86_64;
+
 void *codegen_mem_load_byte;
 void *codegen_mem_load_word;
 void *codegen_mem_load_long;

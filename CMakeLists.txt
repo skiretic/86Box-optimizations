@@ -236,3 +236,4 @@ endif()
 set(CMAKE_TOP_LEVEL_PROCESSED TRUE)
 
 add_subdirectory(src)
+add_subdirectory(benchmarks)

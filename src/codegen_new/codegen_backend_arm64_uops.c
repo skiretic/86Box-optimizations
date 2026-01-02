@@ -1491,6 +1491,32 @@ codegen_PACKUSWB(codeblock_t *block, uop_t *uop)
 }
 
 static int
+codegen_PSHUFB(codeblock_t *block, uop_t *uop)
+{
+    int dest_reg   = HOST_REG_GET(uop->dest_reg_a_real);
+    int src_reg_a  = HOST_REG_GET(uop->src_reg_a_real);
+    int src_reg_b  = HOST_REG_GET(uop->src_reg_b_real);
+    int dest_size  = IREG_GET_SIZE(uop->dest_reg_a_real);
+    int src_size_a = IREG_GET_SIZE(uop->src_reg_a_real);
+    int src_size_b = IREG_GET_SIZE(uop->src_reg_b_real);
+
+    if (REG_IS_Q(dest_size) && REG_IS_Q(src_size_a) && REG_IS_Q(src_size_b)) {
+        // PSHUFB: shuffle bytes from src_a using indices from src_b
+        // If index & 0x80, result = 0, else result = src_a[index & 7]
+        host_arm64_AND_IMM(block, REG_V_TEMP, src_reg_b, 7);  // mask indices to 0-7
+        host_arm64_TBX1_V8B(block, dest_reg, src_reg_a, REG_V_TEMP);  // dest = lookup
+        // Now handle high bit: if set, set to 0
+        host_arm64_AND_IMM(block, REG_V_TEMP2, src_reg_b, 0x80);  // REG_V_TEMP2 = mask where high bit set
+        host_arm64_NOT_V8B(block, REG_V_TEMP, REG_V_TEMP2);  // REG_V_TEMP = ~mask
+        host_arm64_BSL_V8B(block, REG_V_TEMP, dest_reg, REG_V_TEMP);  // REG_V_TEMP = dest & ~mask
+        host_arm64_INS_D(block, dest_reg, REG_V_TEMP, 0, 0);
+    } else
+        fatal("PSHUFB %02x %02x %02x\n", uop->dest_reg_a_real, uop->src_reg_a_real, uop->src_reg_b_real);
+
+    return 0;
+}
+
+static int
 codegen_PADDB(codeblock_t *block, uop_t *uop)
 {
     int dest_reg   = HOST_REG_GET(uop->dest_reg_a_real);
@@ -1501,9 +1527,16 @@ codegen_PADDB(codeblock_t *block, uop_t *uop)
     int src_size_b = IREG_GET_SIZE(uop->src_reg_b_real);
 
     if (REG_IS_Q(dest_size) && REG_IS_Q(src_size_a) && REG_IS_Q(src_size_b)) {
+        if (codegen_backend_is_apple_arm64()) {
+            host_arm64_ADD_V8B(block, dest_reg, src_reg_a, src_reg_b);
+            return 0;
+        }
+
         host_arm64_ADD_V8B(block, dest_reg, src_reg_a, src_reg_b);
-    } else
-        fatal("PADDB %02x %02x %02x\n", uop->dest_reg_a_real, uop->src_reg_a_real, uop->src_reg_b_real);
+        return 0;
+    }
+
+    fatal("PADDB %02x %02x %02x\n", uop->dest_reg_a_real, uop->src_reg_a_real, uop->src_reg_b_real);
 
     return 0;
 }
@@ -1518,9 +1551,16 @@ codegen_PADDW(codeblock_t *block, uop_t *uop)
     int src_size_b = IREG_GET_SIZE(uop->src_reg_b_real);
 
     if (REG_IS_Q(dest_size) && REG_IS_Q(src_size_a) && REG_IS_Q(src_size_b)) {
+        if (codegen_backend_is_apple_arm64()) {
+            host_arm64_ADD_V4H(block, dest_reg, src_reg_a, src_reg_b);
+            return 0;
+        }
+
         host_arm64_ADD_V4H(block, dest_reg, src_reg_a, src_reg_b);
-    } else
-        fatal("PADDW %02x %02x %02x\n", uop->dest_reg_a_real, uop->src_reg_a_real, uop->src_reg_b_real);
+        return 0;
+    }
+
+    fatal("PADDW %02x %02x %02x\n", uop->dest_reg_a_real, uop->src_reg_a_real, uop->src_reg_b_real);
 
     return 0;
 }
@@ -1535,9 +1575,16 @@ codegen_PADDD(codeblock_t *block, uop_t *uop)
     int src_size_b = IREG_GET_SIZE(uop->src_reg_b_real);
 
     if (REG_IS_Q(dest_size) && REG_IS_Q(src_size_a) && REG_IS_Q(src_size_b)) {
+        if (codegen_backend_is_apple_arm64()) {
+            host_arm64_ADD_V2S(block, dest_reg, src_reg_a, src_reg_b);
+            return 0;
+        }
+
         host_arm64_ADD_V2S(block, dest_reg, src_reg_a, src_reg_b);
-    } else
-        fatal("PADDD %02x %02x %02x\n", uop->dest_reg_a_real, uop->src_reg_a_real, uop->src_reg_b_real);
+        return 0;
+    }
+
+    fatal("PADDD %02x %02x %02x\n", uop->dest_reg_a_real, uop->src_reg_a_real, uop->src_reg_b_real);
 
     return 0;
 }
@@ -1552,9 +1599,16 @@ codegen_PADDSB(codeblock_t *block, uop_t *uop)
     int src_size_b = IREG_GET_SIZE(uop->src_reg_b_real);
 
     if (REG_IS_Q(dest_size) && REG_IS_Q(src_size_a) && REG_IS_Q(src_size_b)) {
+        if (codegen_backend_is_apple_arm64()) {
+            host_arm64_SQADD_V8B(block, dest_reg, src_reg_a, src_reg_b);
+            return 0;
+        }
+
         host_arm64_SQADD_V8B(block, dest_reg, src_reg_a, src_reg_b);
-    } else
-        fatal("PADDSB %02x %02x %02x\n", uop->dest_reg_a_real, uop->src_reg_a_real, uop->src_reg_b_real);
+        return 0;
+    }
+
+    fatal("PADDSB %02x %02x %02x\n", uop->dest_reg_a_real, uop->src_reg_a_real, uop->src_reg_b_real);
 
     return 0;
 }
@@ -1569,9 +1623,16 @@ codegen_PADDSW(codeblock_t *block, uop_t *uop)
     int src_size_b = IREG_GET_SIZE(uop->src_reg_b_real);
 
     if (REG_IS_Q(dest_size) && REG_IS_Q(src_size_a) && REG_IS_Q(src_size_b)) {
+        if (codegen_backend_is_apple_arm64()) {
+            host_arm64_SQADD_V4H(block, dest_reg, src_reg_a, src_reg_b);
+            return 0;
+        }
+
         host_arm64_SQADD_V4H(block, dest_reg, src_reg_a, src_reg_b);
-    } else
-        fatal("PADDSW %02x %02x %02x\n", uop->dest_reg_a_real, uop->src_reg_a_real, uop->src_reg_b_real);
+        return 0;
+    }
+
+    fatal("PADDSW %02x %02x %02x\n", uop->dest_reg_a_real, uop->src_reg_a_real, uop->src_reg_b_real);
 
     return 0;
 }
@@ -1586,9 +1647,16 @@ codegen_PADDUSB(codeblock_t *block, uop_t *uop)
     int src_size_b = IREG_GET_SIZE(uop->src_reg_b_real);
 
     if (REG_IS_Q(dest_size) && REG_IS_Q(src_size_a) && REG_IS_Q(src_size_b)) {
+        if (codegen_backend_is_apple_arm64()) {
+            host_arm64_UQADD_V8B(block, dest_reg, src_reg_a, src_reg_b);
+            return 0;
+        }
+
         host_arm64_UQADD_V8B(block, dest_reg, src_reg_a, src_reg_b);
-    } else
-        fatal("PADDUSB %02x %02x %02x\n", uop->dest_reg_a_real, uop->src_reg_a_real, uop->src_reg_b_real);
+        return 0;
+    }
+
+    fatal("PADDUSB %02x %02x %02x\n", uop->dest_reg_a_real, uop->src_reg_a_real, uop->src_reg_b_real);
 
     return 0;
 }
@@ -1603,9 +1671,16 @@ codegen_PADDUSW(codeblock_t *block, uop_t *uop)
     int src_size_b = IREG_GET_SIZE(uop->src_reg_b_real);
 
     if (REG_IS_Q(dest_size) && REG_IS_Q(src_size_a) && REG_IS_Q(src_size_b)) {
+        if (codegen_backend_is_apple_arm64()) {
+            host_arm64_UQADD_V4H(block, dest_reg, src_reg_a, src_reg_b);
+            return 0;
+        }
+
         host_arm64_UQADD_V4H(block, dest_reg, src_reg_a, src_reg_b);
-    } else
-        fatal("PADDUSW %02x %02x %02x\n", uop->dest_reg_a_real, uop->src_reg_a_real, uop->src_reg_b_real);
+        return 0;
+    }
+
+    fatal("PADDUSW %02x %02x %02x\n", uop->dest_reg_a_real, uop->src_reg_a_real, uop->src_reg_b_real);
 
     return 0;
 }
@@ -1928,10 +2003,18 @@ codegen_PMADDWD(codeblock_t *block, uop_t *uop)
     int src_size_b = IREG_GET_SIZE(uop->src_reg_b_real);
 
     if (REG_IS_Q(dest_size) && REG_IS_Q(src_size_a) && REG_IS_Q(src_size_b)) {
+        if (codegen_backend_is_apple_arm64()) {
+            host_arm64_SMULL_V4S_4H(block, REG_V_TEMP, src_reg_a, src_reg_b);
+            host_arm64_ADDP_V4S(block, dest_reg, REG_V_TEMP, REG_V_TEMP);
+            return 0;
+        }
+
         host_arm64_SMULL_V4S_4H(block, REG_V_TEMP, src_reg_a, src_reg_b);
         host_arm64_ADDP_V4S(block, dest_reg, REG_V_TEMP, REG_V_TEMP);
-    } else
-        fatal("PMULHW %02x %02x %02x\n", uop->dest_reg_a_real, uop->src_reg_a_real, uop->src_reg_b_real);
+        return 0;
+    }
+
+    fatal("PMULHW %02x %02x %02x\n", uop->dest_reg_a_real, uop->src_reg_a_real, uop->src_reg_b_real);
 
     return 0;
 }
@@ -1946,10 +2029,18 @@ codegen_PMULHW(codeblock_t *block, uop_t *uop)
     int src_size_b = IREG_GET_SIZE(uop->src_reg_b_real);
 
     if (REG_IS_Q(dest_size) && REG_IS_Q(src_size_a) && REG_IS_Q(src_size_b)) {
+        if (codegen_backend_is_apple_arm64()) {
+            host_arm64_SMULL_V4S_4H(block, dest_reg, src_reg_a, src_reg_b);
+            host_arm64_SHRN_V4H_4S(block, dest_reg, dest_reg, 16);
+            return 0;
+        }
+
         host_arm64_SMULL_V4S_4H(block, dest_reg, src_reg_a, src_reg_b);
         host_arm64_SHRN_V4H_4S(block, dest_reg, dest_reg, 16);
-    } else
-        fatal("PMULHW %02x %02x %02x\n", uop->dest_reg_a_real, uop->src_reg_a_real, uop->src_reg_b_real);
+        return 0;
+    }
+
+    fatal("PMULHW %02x %02x %02x\n", uop->dest_reg_a_real, uop->src_reg_a_real, uop->src_reg_b_real);
 
     return 0;
 }
@@ -1964,9 +2055,16 @@ codegen_PMULLW(codeblock_t *block, uop_t *uop)
     int src_size_b = IREG_GET_SIZE(uop->src_reg_b_real);
 
     if (REG_IS_Q(dest_size) && REG_IS_Q(src_size_a) && REG_IS_Q(src_size_b)) {
+        if (codegen_backend_is_apple_arm64()) {
+            host_arm64_MUL_V4H(block, dest_reg, src_reg_a, src_reg_b);
+            return 0;
+        }
+
         host_arm64_MUL_V4H(block, dest_reg, src_reg_a, src_reg_b);
-    } else
-        fatal("PMULLW %02x %02x %02x\n", uop->dest_reg_a_real, uop->src_reg_a_real, uop->src_reg_b_real);
+        return 0;
+    }
+
+    fatal("PMULLW %02x %02x %02x\n", uop->dest_reg_a_real, uop->src_reg_a_real, uop->src_reg_b_real);
 
     return 0;
 }
@@ -2163,9 +2261,16 @@ codegen_PSUBB(codeblock_t *block, uop_t *uop)
     int src_size_b = IREG_GET_SIZE(uop->src_reg_b_real);
 
     if (REG_IS_Q(dest_size) && REG_IS_Q(src_size_a) && REG_IS_Q(src_size_b)) {
+        if (codegen_backend_is_apple_arm64()) {
+            host_arm64_SUB_V8B(block, dest_reg, src_reg_a, src_reg_b);
+            return 0;
+        }
+
         host_arm64_SUB_V8B(block, dest_reg, src_reg_a, src_reg_b);
-    } else
-        fatal("PSUBB %02x %02x %02x\n", uop->dest_reg_a_real, uop->src_reg_a_real, uop->src_reg_b_real);
+        return 0;
+    }
+
+    fatal("PSUBB %02x %02x %02x\n", uop->dest_reg_a_real, uop->src_reg_a_real, uop->src_reg_b_real);
 
     return 0;
 }
@@ -2180,9 +2285,16 @@ codegen_PSUBW(codeblock_t *block, uop_t *uop)
     int src_size_b = IREG_GET_SIZE(uop->src_reg_b_real);
 
     if (REG_IS_Q(dest_size) && REG_IS_Q(src_size_a) && REG_IS_Q(src_size_b)) {
+        if (codegen_backend_is_apple_arm64()) {
+            host_arm64_SUB_V4H(block, dest_reg, src_reg_a, src_reg_b);
+            return 0;
+        }
+
         host_arm64_SUB_V4H(block, dest_reg, src_reg_a, src_reg_b);
-    } else
-        fatal("PSUBW %02x %02x %02x\n", uop->dest_reg_a_real, uop->src_reg_a_real, uop->src_reg_b_real);
+        return 0;
+    }
+
+    fatal("PSUBW %02x %02x %02x\n", uop->dest_reg_a_real, uop->src_reg_a_real, uop->src_reg_b_real);
 
     return 0;
 }
@@ -2197,9 +2309,16 @@ codegen_PSUBD(codeblock_t *block, uop_t *uop)
     int src_size_b = IREG_GET_SIZE(uop->src_reg_b_real);
 
     if (REG_IS_Q(dest_size) && REG_IS_Q(src_size_a) && REG_IS_Q(src_size_b)) {
+        if (codegen_backend_is_apple_arm64()) {
+            host_arm64_SUB_V2S(block, dest_reg, src_reg_a, src_reg_b);
+            return 0;
+        }
+
         host_arm64_SUB_V2S(block, dest_reg, src_reg_a, src_reg_b);
-    } else
-        fatal("PSUBD %02x %02x %02x\n", uop->dest_reg_a_real, uop->src_reg_a_real, uop->src_reg_b_real);
+        return 0;
+    }
+
+    fatal("PSUBD %02x %02x %02x\n", uop->dest_reg_a_real, uop->src_reg_a_real, uop->src_reg_b_real);
 
     return 0;
 }
@@ -2214,9 +2333,16 @@ codegen_PSUBSB(codeblock_t *block, uop_t *uop)
     int src_size_b = IREG_GET_SIZE(uop->src_reg_b_real);
 
     if (REG_IS_Q(dest_size) && REG_IS_Q(src_size_a) && REG_IS_Q(src_size_b)) {
+        if (codegen_backend_is_apple_arm64()) {
+            host_arm64_SQSUB_V8B(block, dest_reg, src_reg_a, src_reg_b);
+            return 0;
+        }
+
         host_arm64_SQSUB_V8B(block, dest_reg, src_reg_a, src_reg_b);
-    } else
-        fatal("PSUBSB %02x %02x %02x\n", uop->dest_reg_a_real, uop->src_reg_a_real, uop->src_reg_b_real);
+        return 0;
+    }
+
+    fatal("PSUBSB %02x %02x %02x\n", uop->dest_reg_a_real, uop->src_reg_a_real, uop->src_reg_b_real);
 
     return 0;
 }
@@ -2231,9 +2357,16 @@ codegen_PSUBSW(codeblock_t *block, uop_t *uop)
     int src_size_b = IREG_GET_SIZE(uop->src_reg_b_real);
 
     if (REG_IS_Q(dest_size) && REG_IS_Q(src_size_a) && REG_IS_Q(src_size_b)) {
+        if (codegen_backend_is_apple_arm64()) {
+            host_arm64_SQSUB_V4H(block, dest_reg, src_reg_a, src_reg_b);
+            return 0;
+        }
+
         host_arm64_SQSUB_V4H(block, dest_reg, src_reg_a, src_reg_b);
-    } else
-        fatal("PSUBSW %02x %02x %02x\n", uop->dest_reg_a_real, uop->src_reg_a_real, uop->src_reg_b_real);
+        return 0;
+    }
+
+    fatal("PSUBSW %02x %02x %02x\n", uop->dest_reg_a_real, uop->src_reg_a_real, uop->src_reg_b_real);
 
     return 0;
 }
@@ -2248,9 +2381,16 @@ codegen_PSUBUSB(codeblock_t *block, uop_t *uop)
     int src_size_b = IREG_GET_SIZE(uop->src_reg_b_real);
 
     if (REG_IS_Q(dest_size) && REG_IS_Q(src_size_a) && REG_IS_Q(src_size_b)) {
+        if (codegen_backend_is_apple_arm64()) {
+            host_arm64_UQSUB_V8B(block, dest_reg, src_reg_a, src_reg_b);
+            return 0;
+        }
+
         host_arm64_UQSUB_V8B(block, dest_reg, src_reg_a, src_reg_b);
-    } else
-        fatal("PSUBUSB %02x %02x %02x\n", uop->dest_reg_a_real, uop->src_reg_a_real, uop->src_reg_b_real);
+        return 0;
+    }
+
+    fatal("PSUBUSB %02x %02x %02x\n", uop->dest_reg_a_real, uop->src_reg_a_real, uop->src_reg_b_real);
 
     return 0;
 }
@@ -2265,9 +2405,16 @@ codegen_PSUBUSW(codeblock_t *block, uop_t *uop)
     int src_size_b = IREG_GET_SIZE(uop->src_reg_b_real);
 
     if (REG_IS_Q(dest_size) && REG_IS_Q(src_size_a) && REG_IS_Q(src_size_b)) {
+        if (codegen_backend_is_apple_arm64()) {
+            host_arm64_UQSUB_V4H(block, dest_reg, src_reg_a, src_reg_b);
+            return 0;
+        }
+
         host_arm64_UQSUB_V4H(block, dest_reg, src_reg_a, src_reg_b);
-    } else
-        fatal("PSUBUSW %02x %02x %02x\n", uop->dest_reg_a_real, uop->src_reg_a_real, uop->src_reg_b_real);
+        return 0;
+    }
+
+    fatal("PSUBUSW %02x %02x %02x\n", uop->dest_reg_a_real, uop->src_reg_a_real, uop->src_reg_b_real);
 
     return 0;
 }
@@ -3288,6 +3435,9 @@ const uOpFn uop_handlers[UOP_MAX] = {
     [UOP_PMADDWD &
         UOP_MASK]
     = codegen_PMADDWD,
+    [UOP_PSHUFB &
+        UOP_MASK]
+    = codegen_PSHUFB,
     [UOP_PMULHW &
         UOP_MASK]
     = codegen_PMULHW,

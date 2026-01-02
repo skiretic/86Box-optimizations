@@ -11,3 +11,8 @@ In order to accept new emulated hardware, the following criteria must be met:
 
 ## Questions
 If you're unsure about any aspect of contributing, don't hesitate to get in touch via any of our official communities linked in our [readme](README.md#community) or [GitHub Discussions](https://github.com/86Box/86Box/discussions).
+
+## Style Guide
+* **No emojis in documentation**: Emojis are not allowed in any documentation files (.md files). Use plain text formatting instead.
+* Use clear, descriptive language in commit messages and documentation
+* Follow the existing code style and formatting conventions

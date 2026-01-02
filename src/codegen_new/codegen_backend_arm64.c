@@ -27,6 +27,8 @@
 #    endif
 #    include <string.h>
 
+codegen_backend_kind_t dynarec_backend = BACKEND_ARM64_GENERIC;
+
 void *codegen_mem_load_byte;
 void *codegen_mem_load_word;
 void *codegen_mem_load_long;
@@ -284,6 +286,12 @@ void
 codegen_backend_init(void)
 {
     codeblock_t *block;
+
+#if defined(__APPLE__) && defined(__aarch64__) && defined(NEW_DYNAREC_BACKEND)
+    dynarec_backend = BACKEND_ARM64_APPLE;
+#else
+    dynarec_backend = BACKEND_ARM64_GENERIC;
+#endif
 
     codeblock      = malloc(BLOCK_SIZE * sizeof(codeblock_t));
     codeblock_hash = malloc(HASH_SIZE * sizeof(codeblock_t *));
