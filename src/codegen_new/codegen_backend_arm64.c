@@ -62,7 +62,7 @@ host_reg_def_t codegen_host_reg_list[CODEGEN_HOST_REGS] = {
     { REG_X28, 0}
 };
 
-host_reg_def_t codegen_host_fp_reg_list[CODEGEN_HOST_FP_REGS] = {
+host_reg_def_t codegen_host_mmx_reg_list[CODEGEN_HOST_MMX_REGS] = {
     { REG_V8,  0},
     { REG_V9,  0},
     { REG_V10, 0},
@@ -71,6 +71,17 @@ host_reg_def_t codegen_host_fp_reg_list[CODEGEN_HOST_FP_REGS] = {
     { REG_V13, 0},
     { REG_V14, 0},
     { REG_V15, 0}
+};
+
+host_reg_def_t codegen_host_fp_reg_list[CODEGEN_HOST_FP_REGS] = {
+    { REG_V16, 0},
+    { REG_V17, 0},
+    { REG_V18, 0},
+    { REG_V19, 0},
+    { REG_V20, 0},
+    { REG_V21, 0},
+    { REG_V22, 0},
+    { REG_V23, 0}
 };
 
 static void

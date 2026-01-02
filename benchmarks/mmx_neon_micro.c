@@ -88,5 +88,8 @@ main(int argc, char **argv)
         bench_common_print_comparison(primary.op_ns, baseline.op_ns, bench_names, BENCH_OP_COUNT);
     }
 
+    // Print cache metrics
+    printf("\nCache Metrics: Not available (microbenchmarks don't run dynarec code)\n");
+
     return 0;
 }

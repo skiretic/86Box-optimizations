@@ -555,8 +555,8 @@ void
 x87_dumpregs(void)
 {
     if (cpu_state.ismmx) {
-        fpu_x87_log("MM0=%016llX\tMM1=%016llX\tMM2=%016llX\tMM3=%016llX\n", cpu_state.MM[0].q, cpu_state.MM[1].q, cpu_state.MM[2].q, cpu_state.MM[3].q);
-        fpu_x87_log("MM4=%016llX\tMM5=%016llX\tMM6=%016llX\tMM7=%016llX\n", cpu_state.MM[4].q, cpu_state.MM[5].q, cpu_state.MM[6].q, cpu_state.MM[7].q);
+        fpu_x87_log("MM0=%016llX\tMM1=%016llX\tMM2=%016llX\tMM3=%016llX\n", CPU_STATE_MM(0).q, CPU_STATE_MM(1).q, CPU_STATE_MM(2).q, CPU_STATE_MM(3).q);
+        fpu_x87_log("MM4=%016llX\tMM5=%016llX\tMM6=%016llX\tMM7=%016llX\n", CPU_STATE_MM(4).q, CPU_STATE_MM(5).q, CPU_STATE_MM(6).q, CPU_STATE_MM(7).q);
     } else {
         fpu_x87_log("ST(0)=%f\tST(1)=%f\tST(2)=%f\tST(3)=%f\t\n", cpu_state.ST[cpu_state.TOP], cpu_state.ST[(cpu_state.TOP + 1) & 7], cpu_state.ST[(cpu_state.TOP + 2) & 7], cpu_state.ST[(cpu_state.TOP + 3) & 7]);
         fpu_x87_log("ST(4)=%f\tST(5)=%f\tST(6)=%f\tST(7)=%f\t\n", cpu_state.ST[(cpu_state.TOP + 4) & 7], cpu_state.ST[(cpu_state.TOP + 5) & 7], cpu_state.ST[(cpu_state.TOP + 6) & 7], cpu_state.ST[(cpu_state.TOP + 7) & 7]);

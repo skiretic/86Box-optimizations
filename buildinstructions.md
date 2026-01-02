@@ -59,4 +59,5 @@ These steps reproduce the working build of `86Box.app` described earlier. Feed t
 
 Notes:
 - All relevant Build instructions reflect the final working configuration described earlier; no extra patches are required besides the Qt plugin copy fix introduced in `src/qt/CMakeLists.txt`.
-- Use Ninja for builds to ensure fast incremental rebuilds; switching generators requires adjusting the `cmake` configure/build commands accordingly.  
+- Use Ninja for builds to ensure fast incremental rebuilds; switching generators requires adjusting the `cmake` configure/build commands accordingly.
+- **Benchmark Limitation**: When `QT=ON`, the `dynarec_test` benchmark application will not be built due to linking conflicts with the macOS bundle. To build all benchmarks including `dynarec_test`, configure with `QT=OFF` and build the benchmarks separately.  

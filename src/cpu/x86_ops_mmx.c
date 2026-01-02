@@ -34,7 +34,7 @@ uint16_t *MMEP[8];
 
 static uint16_t MME[8];
 
-#define MMX_GETREGP(r) fpu_softfloat ? ((MMX_REG *) &fpu_state.st_space[r].signif) : &(cpu_state.MM[r])
+#define MMX_GETREGP(r) fpu_softfloat ? ((MMX_REG *) &fpu_state.st_space[r].signif) : &(CPU_STATE_MM(r))
 void
 mmx_init(void)
 {
@@ -45,7 +45,8 @@ mmx_init(void)
             MMP[i]  = (MMX_REG *) &fpu_state.st_space[i].signif;
             MMEP[i] = (uint16_t *) &fpu_state.st_space[i].signExp;
         } else {
-            MMP[i]  = &(cpu_state.MM[i]);
+            cpu_state_mm_prefetch(i);
+            MMP[i]  = &(CPU_STATE_MM(i));
             MMEP[i] = &(MME[i]);
         }
     }

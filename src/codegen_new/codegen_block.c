@@ -29,6 +29,7 @@ uint8_t *block_write_data = NULL;
 int      codegen_flat_ds;
 int      codegen_flat_ss;
 int      mmx_ebx_ecx_loaded;
+codegen_cache_metrics_t codegen_cache_metrics;
 int      codegen_flags_changed = 0;
 int      codegen_fpu_entered   = 0;
 int      codegen_mmx_entered   = 0;
@@ -60,6 +61,17 @@ uint32_t instr_counts[256 * 256];
 static uint16_t block_free_list;
 static void     delete_block(codeblock_t *block);
 static void     delete_dirty_block(codeblock_t *block);
+
+static inline void
+codegen_cache_metrics_record_generated_block(void)
+{
+    uint32_t block_size = block_pos - BLOCK_START;
+
+    codegen_cache_metrics.bytes_emitted += block_size;
+    if (block_size > codegen_cache_metrics.max_block_bytes)
+        codegen_cache_metrics.max_block_bytes = block_size;
+    codegen_cache_metrics.blocks_compiled++;
+}
 
 /*Temporary list of code blocks that have recently been evicted. This allows for
   some historical state to be kept when a block is the target of self-modifying
@@ -221,6 +233,7 @@ codegen_init(void)
     codegen_allocator_init();
 
     codegen_backend_init();
+    codegen_cache_metrics_reset();
     block_free_list = 0;
     for (uint32_t c = 0; c < BLOCK_SIZE; c++)
         block_free_list_add(&codeblock[c]);
@@ -235,6 +248,8 @@ void
 codegen_reset(void)
 {
     int c;
+
+    codegen_cache_metrics_reset();
 
     for (c = 1; c < BLOCK_SIZE; c++) {
         codeblock_t *block = &codeblock[c];
@@ -371,6 +386,8 @@ invalidate_block(codeblock_t *block)
 {
     uint32_t old_pc = block->pc;
 
+    codegen_cache_metrics.flushes++;
+
 #ifndef RELEASE_BUILD
     if (block->flags & CODEBLOCK_IN_DIRTY_LIST)
         fatal("invalidate_block: already in dirty list\n");
@@ -407,6 +424,12 @@ delete_block(codeblock_t *block)
         codegen_allocator_free(block->head_mem_block);
     block->head_mem_block = NULL;
     block_free_list_add(block);
+}
+
+void
+codegen_cache_metrics_reset(void)
+{
+    memset(&codegen_cache_metrics, 0, sizeof(codegen_cache_metrics));
 }
 
 static void
@@ -547,6 +570,8 @@ void
 codegen_block_start_recompile(codeblock_t *block)
 {
     page_t *page = &pages[block->phys >> 12];
+
+    codegen_cache_metrics.recompiles++;
 
     if (!page->block)
         mem_flush_write_page(block->phys, cs + cpu_state.pc);
@@ -758,6 +783,7 @@ codegen_block_end(void)
     codeblock_t *block = &codeblock[block_current];
 
     codegen_block_generate_end_mask_mark();
+    codegen_cache_metrics_record_generated_block();
     add_to_block_list(block);
 }
 
@@ -780,6 +806,7 @@ codegen_block_end_recompile(codeblock_t *block)
         block->flags &= ~CODEBLOCK_STATIC_TOP;
 
     codegen_accumulate_flush(ir_data);
+    codegen_cache_metrics_record_generated_block();
     codegen_ir_compile(ir_data, block);
 }
 

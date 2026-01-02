@@ -3567,6 +3567,12 @@ codegen_direct_read_double(codeblock_t *block, int host_reg, void *p)
     else
         fatal("codegen_direct_read_double - not in range\n");
 }
+static inline void
+codegen_prefetch_cpu_mmx_state(codeblock_t *block)
+{
+    host_arm64_PRFM(block, REG_CPUSTATE, PRFM_OPTION_PLDL1KEEP, CPU_STATE_MM_OFFSET);
+    host_arm64_PRFM(block, REG_CPUSTATE, PRFM_OPTION_PLDL1KEEP, CPU_STATE_MM_OFFSET + 32);
+}
 void
 codegen_direct_read_st_8(codeblock_t *block, int host_reg, void *base, int reg_idx)
 {
@@ -3579,6 +3585,7 @@ codegen_direct_read_st_8(codeblock_t *block, int host_reg, void *base, int reg_i
 void
 codegen_direct_read_st_64(codeblock_t *block, int host_reg, void *base, int reg_idx)
 {
+    codegen_prefetch_cpu_mmx_state(block);
     host_arm64_LDR_IMM_W(block, REG_TEMP, REG_XSP, IREG_TOP_diff_stack_offset);
     host_arm64_ADD_IMM(block, REG_TEMP, REG_TEMP, reg_idx);
     host_arm64_ADDX_IMM(block, REG_TEMP2, REG_CPUSTATE, (uintptr_t) base - (uintptr_t) &cpu_state);
@@ -3588,6 +3595,7 @@ codegen_direct_read_st_64(codeblock_t *block, int host_reg, void *base, int reg_
 void
 codegen_direct_read_st_double(codeblock_t *block, int host_reg, void *base, int reg_idx)
 {
+    codegen_prefetch_cpu_mmx_state(block);
     host_arm64_LDR_IMM_W(block, REG_TEMP, REG_XSP, IREG_TOP_diff_stack_offset);
     host_arm64_ADD_IMM(block, REG_TEMP, REG_TEMP, reg_idx);
     host_arm64_ADDX_IMM(block, REG_TEMP2, REG_CPUSTATE, (uintptr_t) base - (uintptr_t) &cpu_state);
@@ -3647,6 +3655,7 @@ codegen_direct_write_st_8(codeblock_t *block, void *base, int reg_idx, int host_
 void
 codegen_direct_write_st_64(codeblock_t *block, void *base, int reg_idx, int host_reg)
 {
+    codegen_prefetch_cpu_mmx_state(block);
     host_arm64_LDR_IMM_W(block, REG_TEMP, REG_XSP, IREG_TOP_diff_stack_offset);
     host_arm64_ADD_IMM(block, REG_TEMP, REG_TEMP, reg_idx);
     host_arm64_ADDX_IMM(block, REG_TEMP2, REG_CPUSTATE, (uintptr_t) base - (uintptr_t) &cpu_state);
@@ -3656,6 +3665,7 @@ codegen_direct_write_st_64(codeblock_t *block, void *base, int reg_idx, int host
 void
 codegen_direct_write_st_double(codeblock_t *block, void *base, int reg_idx, int host_reg)
 {
+    codegen_prefetch_cpu_mmx_state(block);
     host_arm64_LDR_IMM_W(block, REG_TEMP, REG_XSP, IREG_TOP_diff_stack_offset);
     host_arm64_ADD_IMM(block, REG_TEMP, REG_TEMP, reg_idx);
     host_arm64_ADDX_IMM(block, REG_TEMP2, REG_CPUSTATE, (uintptr_t) base - (uintptr_t) &cpu_state);

@@ -22,6 +22,10 @@ static uint8_t _host_reg_dirty[CODEGEN_HOST_REGS];
 
 ir_reg_t       host_fp_regs[CODEGEN_HOST_FP_REGS];
 static uint8_t host_fp_reg_dirty[CODEGEN_HOST_FP_REGS];
+#if defined __aarch64__ || defined _M_ARM64
+ir_reg_t       host_mmx_regs[CODEGEN_HOST_MMX_REGS];
+static uint8_t host_mmx_reg_dirty[CODEGEN_HOST_MMX_REGS];
+#endif
 
 typedef struct host_reg_set_t {
     ir_reg_t       *regs;
@@ -30,6 +34,10 @@ typedef struct host_reg_set_t {
     uint16_t        locked;
     int             nr_regs;
 } host_reg_set_t;
+
+#if defined __aarch64__ || defined _M_ARM64
+static host_reg_set_t host_mmx_reg_set;
+#endif
 
 static host_reg_set_t host_reg_set;
 static host_reg_set_t host_fp_reg_set;
@@ -260,6 +268,13 @@ codegen_reg_reset(void)
     host_fp_reg_set.reg_list = codegen_host_fp_reg_list;
     host_fp_reg_set.locked   = 0;
     host_fp_reg_set.nr_regs  = CODEGEN_HOST_FP_REGS;
+#if defined __aarch64__ || defined _M_ARM64
+    host_mmx_reg_set.regs     = host_mmx_regs;
+    host_mmx_reg_set.dirty    = host_mmx_reg_dirty;
+    host_mmx_reg_set.reg_list = codegen_host_mmx_reg_list;
+    host_mmx_reg_set.locked   = 0;
+    host_mmx_reg_set.nr_regs  = CODEGEN_HOST_MMX_REGS;
+#endif
 
     dirty_ir_regs[0] = dirty_ir_regs[1] = 0;
 
@@ -275,6 +290,12 @@ codegen_reg_reset(void)
         host_fp_reg_set.regs[c]  = invalid_ir_reg;
         host_fp_reg_set.dirty[c] = 0;
     }
+#if defined __aarch64__ || defined _M_ARM64
+    for (c = 0; c < CODEGEN_HOST_MMX_REGS; c++) {
+        host_mmx_reg_set.regs[c]  = invalid_ir_reg;
+        host_mmx_reg_set.dirty[c] = 0;
+    }
+#endif
 
     reg_dead_list        = 0;
     max_version_refcount = 0;
@@ -286,9 +307,22 @@ ir_get_refcount(ir_reg_t ir_reg)
     return reg_version[IREG_GET_REG(ir_reg.reg)][ir_reg.version].refcount;
 }
 
+#if defined __aarch64__ || defined _M_ARM64
+static inline int
+ir_reg_is_mmx(ir_reg_t ir_reg)
+{
+    int reg = IREG_GET_REG(ir_reg.reg);
+    return reg >= IREG_MM0 && reg <= IREG_MM7;
+}
+#endif
+
 static inline host_reg_set_t *
 get_reg_set(ir_reg_t ir_reg)
 {
+#if defined __aarch64__ || defined _M_ARM64
+    if (ir_reg_is_mmx(ir_reg))
+        return &host_mmx_reg_set;
+#endif
     if (ireg_data[IREG_GET_REG(ir_reg.reg)].type == REG_INTEGER)
         return &host_reg_set;
     else
@@ -371,9 +405,9 @@ codegen_reg_load(host_reg_set_t *reg_set, codeblock_t *block, int c, ir_reg_t ir
                 fatal("codegen_reg_load - REG_FPU_ST_QWORD !REG_FP\n");
 #endif
             if (block->flags & CODEBLOCK_STATIC_TOP)
-                codegen_direct_read_64(block, reg_set->reg_list[c].reg, &cpu_state.MM[ir_reg.reg & 7]);
+                codegen_direct_read_64(block, reg_set->reg_list[c].reg, &CPU_STATE_MM(ir_reg.reg & 7));
             else
-                codegen_direct_read_st_64(block, reg_set->reg_list[c].reg, &cpu_state.MM[0], ir_reg.reg & 7);
+                codegen_direct_read_st_64(block, reg_set->reg_list[c].reg, &CPU_STATE_MM(0), ir_reg.reg & 7);
             break;
 
         case REG_FPU_ST_DOUBLE:
@@ -484,9 +518,9 @@ codegen_reg_writeback(host_reg_set_t *reg_set, codeblock_t *block, int c, int in
                 fatal("codegen_reg_writeback - REG_FPU_ST_QWORD !REG_FP\n");
 #endif
             if (block->flags & CODEBLOCK_STATIC_TOP)
-                codegen_direct_write_64(block, &cpu_state.MM[reg_set->regs[c].reg & 7], reg_set->reg_list[c].reg);
+                codegen_direct_write_64(block, &CPU_STATE_MM(reg_set->regs[c].reg & 7), reg_set->reg_list[c].reg);
             else
-                codegen_direct_write_st_64(block, &cpu_state.MM[0], reg_set->regs[c].reg & 7, reg_set->reg_list[c].reg);
+                codegen_direct_write_st_64(block, &CPU_STATE_MM(0), reg_set->regs[c].reg & 7, reg_set->reg_list[c].reg);
             break;
 
         case REG_FPU_ST_DOUBLE:
@@ -608,6 +642,9 @@ codegen_reg_alloc_register(ir_reg_t dest_reg_a, ir_reg_t src_reg_a, ir_reg_t src
 
     host_reg_set.locked    = 0;
     host_fp_reg_set.locked = 0;
+#if defined __aarch64__ || defined _M_ARM64
+    host_mmx_reg_set.locked = 0;
+#endif
 
     if (!ir_reg_is_invalid(dest_reg_a)) {
         if (!ir_reg_is_invalid(src_reg_a) && IREG_GET_REG(src_reg_a.reg) == IREG_GET_REG(dest_reg_a.reg) && src_reg_a.version == dest_reg_a.version - 1)
@@ -843,6 +880,18 @@ codegen_reg_flush(UNUSED(ir_data_t *ir), codeblock_t *block)
             reg_set->dirty[c] = 0;
         }
     }
+#if defined __aarch64__ || defined _M_ARM64
+    reg_set = &host_mmx_reg_set;
+    for (c = 0; c < reg_set->nr_regs; c++) {
+        if (!ir_reg_is_invalid(reg_set->regs[c]) && reg_set->dirty[c]) {
+            codegen_reg_writeback(reg_set, block, c, 0);
+        }
+        if (reg_set->reg_list[c].flags & HOST_REG_FLAG_VOLATILE) {
+            reg_set->regs[c]  = invalid_ir_reg;
+            reg_set->dirty[c] = 0;
+        }
+    }
+#endif
 }
 
 void
@@ -868,6 +917,16 @@ codegen_reg_flush_invalidate(UNUSED(ir_data_t *ir), codeblock_t *block)
         reg_set->regs[c]  = invalid_ir_reg;
         reg_set->dirty[c] = 0;
     }
+#if defined __aarch64__ || defined _M_ARM64
+    reg_set = &host_mmx_reg_set;
+    for (c = 0; c < reg_set->nr_regs; c++) {
+        if (!ir_reg_is_invalid(reg_set->regs[c]) && reg_set->dirty[c]) {
+            codegen_reg_writeback(reg_set, block, c, 1);
+        }
+        reg_set->regs[c]  = invalid_ir_reg;
+        reg_set->dirty[c] = 0;
+    }
+#endif
 }
 
 /*Process dead register list, and optimise out register versions and uOPs where

@@ -245,21 +245,21 @@ FSAVE(void)
             writememw(easeg, cpu_state.eaaddr + 10, x87_op_off);
             cpu_state.eaaddr += 14;
             if (cpu_state.ismmx) {
-                x87_stmmx(cpu_state.MM[0]);
+                x87_stmmx(CPU_STATE_MM(0));
                 cpu_state.eaaddr += 10;
-                x87_stmmx(cpu_state.MM[1]);
+                x87_stmmx(CPU_STATE_MM(1));
                 cpu_state.eaaddr += 10;
-                x87_stmmx(cpu_state.MM[2]);
+                x87_stmmx(CPU_STATE_MM(2));
                 cpu_state.eaaddr += 10;
-                x87_stmmx(cpu_state.MM[3]);
+                x87_stmmx(CPU_STATE_MM(3));
                 cpu_state.eaaddr += 10;
-                x87_stmmx(cpu_state.MM[4]);
+                x87_stmmx(CPU_STATE_MM(4));
                 cpu_state.eaaddr += 10;
-                x87_stmmx(cpu_state.MM[5]);
+                x87_stmmx(CPU_STATE_MM(5));
                 cpu_state.eaaddr += 10;
-                x87_stmmx(cpu_state.MM[6]);
+                x87_stmmx(CPU_STATE_MM(6));
                 cpu_state.eaaddr += 10;
-                x87_stmmx(cpu_state.MM[7]);
+                x87_stmmx(CPU_STATE_MM(7));
             } else {
                 x87_st_fsave(0);
                 cpu_state.eaaddr += 10;
@@ -288,21 +288,21 @@ FSAVE(void)
             writememw(easeg, cpu_state.eaaddr + 12, x87_op_seg);
             cpu_state.eaaddr += 14;
             if (cpu_state.ismmx) {
-                x87_stmmx(cpu_state.MM[0]);
+                x87_stmmx(CPU_STATE_MM(0));
                 cpu_state.eaaddr += 10;
-                x87_stmmx(cpu_state.MM[1]);
+                x87_stmmx(CPU_STATE_MM(1));
                 cpu_state.eaaddr += 10;
-                x87_stmmx(cpu_state.MM[2]);
+                x87_stmmx(CPU_STATE_MM(2));
                 cpu_state.eaaddr += 10;
-                x87_stmmx(cpu_state.MM[3]);
+                x87_stmmx(CPU_STATE_MM(3));
                 cpu_state.eaaddr += 10;
-                x87_stmmx(cpu_state.MM[4]);
+                x87_stmmx(CPU_STATE_MM(4));
                 cpu_state.eaaddr += 10;
-                x87_stmmx(cpu_state.MM[5]);
+                x87_stmmx(CPU_STATE_MM(5));
                 cpu_state.eaaddr += 10;
-                x87_stmmx(cpu_state.MM[6]);
+                x87_stmmx(CPU_STATE_MM(6));
                 cpu_state.eaaddr += 10;
-                x87_stmmx(cpu_state.MM[7]);
+                x87_stmmx(CPU_STATE_MM(7));
             } else {
                 x87_st_fsave(0);
                 cpu_state.eaaddr += 10;
@@ -330,21 +330,21 @@ FSAVE(void)
             writememl(easeg, cpu_state.eaaddr + 24, (x87_op_off >> 16) << 12);
             cpu_state.eaaddr += 28;
             if (cpu_state.ismmx) {
-                x87_stmmx(cpu_state.MM[0]);
+                x87_stmmx(CPU_STATE_MM(0));
                 cpu_state.eaaddr += 10;
-                x87_stmmx(cpu_state.MM[1]);
+                x87_stmmx(CPU_STATE_MM(1));
                 cpu_state.eaaddr += 10;
-                x87_stmmx(cpu_state.MM[2]);
+                x87_stmmx(CPU_STATE_MM(2));
                 cpu_state.eaaddr += 10;
-                x87_stmmx(cpu_state.MM[3]);
+                x87_stmmx(CPU_STATE_MM(3));
                 cpu_state.eaaddr += 10;
-                x87_stmmx(cpu_state.MM[4]);
+                x87_stmmx(CPU_STATE_MM(4));
                 cpu_state.eaaddr += 10;
-                x87_stmmx(cpu_state.MM[5]);
+                x87_stmmx(CPU_STATE_MM(5));
                 cpu_state.eaaddr += 10;
-                x87_stmmx(cpu_state.MM[6]);
+                x87_stmmx(CPU_STATE_MM(6));
                 cpu_state.eaaddr += 10;
-                x87_stmmx(cpu_state.MM[7]);
+                x87_stmmx(CPU_STATE_MM(7));
             } else {
                 x87_st_fsave(0);
                 cpu_state.eaaddr += 10;
@@ -373,21 +373,21 @@ FSAVE(void)
             writememl(easeg, cpu_state.eaaddr + 24, x87_op_seg);
             cpu_state.eaaddr += 28;
             if (cpu_state.ismmx) {
-                x87_stmmx(cpu_state.MM[0]);
+                x87_stmmx(CPU_STATE_MM(0));
                 cpu_state.eaaddr += 10;
-                x87_stmmx(cpu_state.MM[1]);
+                x87_stmmx(CPU_STATE_MM(1));
                 cpu_state.eaaddr += 10;
-                x87_stmmx(cpu_state.MM[2]);
+                x87_stmmx(CPU_STATE_MM(2));
                 cpu_state.eaaddr += 10;
-                x87_stmmx(cpu_state.MM[3]);
+                x87_stmmx(CPU_STATE_MM(3));
                 cpu_state.eaaddr += 10;
-                x87_stmmx(cpu_state.MM[4]);
+                x87_stmmx(CPU_STATE_MM(4));
                 cpu_state.eaaddr += 10;
-                x87_stmmx(cpu_state.MM[5]);
+                x87_stmmx(CPU_STATE_MM(5));
                 cpu_state.eaaddr += 10;
-                x87_stmmx(cpu_state.MM[6]);
+                x87_stmmx(CPU_STATE_MM(6));
                 cpu_state.eaaddr += 10;
-                x87_stmmx(cpu_state.MM[7]);
+                x87_stmmx(CPU_STATE_MM(7));
             } else {
                 x87_st_fsave(0);
                 cpu_state.eaaddr += 10;
@@ -483,10 +483,10 @@ opFLD(uint32_t fetchdat)
     FP_ENTER();
     cpu_state.pc++;
     old_tag = cpu_state.tag[(cpu_state.TOP + fetchdat) & 7];
-    old_i64 = cpu_state.MM[(cpu_state.TOP + fetchdat) & 7].q;
+    old_i64 = CPU_STATE_MM((cpu_state.TOP + fetchdat) & 7).q;
     x87_push(ST(fetchdat & 7));
     cpu_state.tag[cpu_state.TOP & 7]  = old_tag;
-    cpu_state.MM[cpu_state.TOP & 7].q = old_i64;
+    CPU_STATE_MM(cpu_state.TOP & 7).q = old_i64;
     CLOCK_CYCLES_FPU((fpu_type >= FPU_487SX) ? (x87_timings.fld) : (x87_timings.fld * cpu_multi));
     CONCURRENCY_CYCLES((fpu_type >= FPU_487SX) ? (x87_concurrency.fld) : (x87_concurrency.fld * cpu_multi));
     return 0;
@@ -506,9 +506,9 @@ opFXCH(uint32_t fetchdat)
     old_tag                                        = cpu_state.tag[cpu_state.TOP & 7];
     cpu_state.tag[cpu_state.TOP & 7]               = cpu_state.tag[(cpu_state.TOP + fetchdat) & 7];
     cpu_state.tag[(cpu_state.TOP + fetchdat) & 7]  = old_tag;
-    old_i64                                        = cpu_state.MM[cpu_state.TOP & 7].q;
-    cpu_state.MM[cpu_state.TOP & 7].q              = cpu_state.MM[(cpu_state.TOP + fetchdat) & 7].q;
-    cpu_state.MM[(cpu_state.TOP + fetchdat) & 7].q = old_i64;
+    old_i64                                        = CPU_STATE_MM(cpu_state.TOP & 7).q;
+    CPU_STATE_MM(cpu_state.TOP & 7).q              = CPU_STATE_MM((cpu_state.TOP + fetchdat) & 7).q;
+    CPU_STATE_MM((cpu_state.TOP + fetchdat) & 7).q = old_i64;
 
     CLOCK_CYCLES_FPU((fpu_type >= FPU_487SX) ? (x87_timings.fxch) : (x87_timings.fxch * cpu_multi));
     CONCURRENCY_CYCLES((fpu_type >= FPU_487SX) ? (x87_concurrency.fxch) : (x87_concurrency.fxch * cpu_multi));
@@ -1160,7 +1160,7 @@ opFSTCW_a32(uint32_t fetchdat)
                 cpu_state.pc++;                                                                         \
                 if (cond_##condition) {                                                                 \
                     cpu_state.tag[cpu_state.TOP & 7]  = cpu_state.tag[(cpu_state.TOP + fetchdat) & 7];  \
-                    cpu_state.MM[cpu_state.TOP & 7].q = cpu_state.MM[(cpu_state.TOP + fetchdat) & 7].q; \
+                    CPU_STATE_MM(cpu_state.TOP & 7).q = CPU_STATE_MM((cpu_state.TOP + fetchdat) & 7).q; \
                     ST(0)                             = ST(fetchdat & 7);                               \
                 }                                                                                       \
                 CLOCK_CYCLES_FPU(4);                                                                    \

@@ -116,7 +116,7 @@ opFILDiq_a16(UNUSED(uint32_t fetchdat))
     if (cpu_state.abrt)
         return 1;
     x87_push((double) temp64);
-    cpu_state.MM[cpu_state.TOP & 7].q = temp64;
+    CPU_STATE_MM(cpu_state.TOP & 7).q = temp64;
     FP_TAG_DEFAULT;
 
     CLOCK_CYCLES_FPU((fpu_type >= FPU_487SX) ? (x87_timings.fild_64) : (x87_timings.fild_64 * cpu_multi));
@@ -135,7 +135,7 @@ opFILDiq_a32(uint32_t fetchdat)
     if (cpu_state.abrt)
         return 1;
     x87_push((double) temp64);
-    cpu_state.MM[cpu_state.TOP & 7].q = temp64;
+    CPU_STATE_MM(cpu_state.TOP & 7).q = temp64;
     FP_TAG_DEFAULT;
 
     CLOCK_CYCLES_FPU((fpu_type >= FPU_487SX) ? (x87_timings.fild_64) : (x87_timings.fild_64 * cpu_multi));
@@ -177,7 +177,7 @@ FBLD_a16(UNUSED(uint32_t fetchdat))
     if (sign)
         load_val = -load_val;
     x87_push((double) load_val);
-    cpu_state.MM[cpu_state.TOP & 7].q = load_val;
+    CPU_STATE_MM(cpu_state.TOP & 7).q = load_val;
     FP_TAG_DEFAULT;
 
     CLOCK_CYCLES_FPU((fpu_type >= FPU_487SX) ? (x87_timings.fild_64) : (x87_timings.fild_64 * cpu_multi));
@@ -218,7 +218,7 @@ FBLD_a32(uint32_t fetchdat)
     if (sign)
         load_val = -load_val;
     x87_push((double) load_val);
-    cpu_state.MM[cpu_state.TOP & 7].q = load_val;
+    CPU_STATE_MM(cpu_state.TOP & 7).q = load_val;
     FP_TAG_DEFAULT;
 
     CLOCK_CYCLES_FPU((fpu_type >= FPU_487SX) ? (x87_timings.fild_64) : (x87_timings.fild_64 * cpu_multi));
@@ -303,7 +303,7 @@ FISTPiq_a16(UNUSED(uint32_t fetchdat))
     fetch_ea_16(fetchdat);
     SEG_CHECK_WRITE(cpu_state.ea_seg);
     if (cpu_state.tag[cpu_state.TOP & 7] & TAG_UINT64)
-        temp64 = cpu_state.MM[cpu_state.TOP & 7].q;
+        temp64 = CPU_STATE_MM(cpu_state.TOP & 7).q;
     else
         temp64 = x87_fround(ST(0));
     seteaq(temp64);
@@ -323,7 +323,7 @@ FISTPiq_a32(uint32_t fetchdat)
     fetch_ea_32(fetchdat);
     SEG_CHECK_WRITE(cpu_state.ea_seg);
     if (cpu_state.tag[cpu_state.TOP & 7] & TAG_UINT64)
-        temp64 = cpu_state.MM[cpu_state.TOP & 7].q;
+        temp64 = CPU_STATE_MM(cpu_state.TOP & 7).q;
     else
         temp64 = x87_fround(ST(0));
     seteaq(temp64);

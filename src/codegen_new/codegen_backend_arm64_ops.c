@@ -246,6 +246,10 @@
 #    define OFFSET12_W(offset)        ((offset >> 2) << 10)
 #    define OFFSET12_Q(offset)        ((offset >> 3) << 10)
 
+#    define OPCODE_PRFM            (0xf9800000)
+#    define OPTION_PRFM(option)    ((option) & 0x3)
+#    define PRFM_OFFSET(offset)    (((offset) >> 3) << 10)
+
 #    define SHIFT_IMM_V4H(shift)      (((shift) | 0x10) << 16)
 #    define SHIFT_IMM_V2S(shift)      (((shift) | 0x20) << 16)
 #    define SHIFT_IMM_V2D(shift)      (((shift) | 0x40) << 16)
@@ -339,6 +343,16 @@ host_arm64_ADD_IMM(codeblock_t *block, int dst_reg, int src_n_reg, uint32_t imm_
         host_arm64_MOVK_IMM(block, REG_W16, imm_data & 0xffff0000);
         codegen_addlong(block, OPCODE_ADD_LSL | Rd(dst_reg) | Rn(src_n_reg) | Rm(REG_W16) | DATPROC_SHIFT(0));
     }
+}
+void
+host_arm64_PRFM(codeblock_t *block, int base_reg, int option, int offset)
+{
+    if (offset & 7)
+        fatal("host_arm64_PRFM offset not 8-byte aligned %i\n", offset);
+    if (!in_range12_b(offset))
+        fatal("host_arm64_PRFM out of range12 %i\n", offset);
+    uint32_t insn = OPCODE_PRFM | Rt(base_reg) | OPTION_PRFM(option) | PRFM_OFFSET(offset);
+    codegen_addlong(block, insn);
 }
 void
 host_arm64_ADDX_IMM(codeblock_t *block, int dst_reg, int src_n_reg, uint64_t imm_data)

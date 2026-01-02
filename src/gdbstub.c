@@ -593,8 +593,8 @@ gdbstub_client_write_reg(int index, uint8_t *buf)
             break;
 
         case GDB_REG_MM0 ... GDB_REG_MM7:
-            width                               = 8;
-            cpu_state.MM[index - GDB_REG_MM0].q = *((uint64_t *) buf);
+            width                             = 8;
+            CPU_STATE_MM(index - GDB_REG_MM0).q = *((uint64_t *) buf);
             break;
 
         default:
@@ -723,7 +723,7 @@ gdbstub_client_read_reg(int index, uint8_t *buf)
 
         case GDB_REG_MM0 ... GDB_REG_MM7:
             width               = 8;
-            *((uint64_t *) buf) = cpu_state.MM[index - GDB_REG_MM0].q;
+            *((uint64_t *) buf) = CPU_STATE_MM(index - GDB_REG_MM0).q;
             break;
 
         default:

@@ -21,6 +21,8 @@
 #ifndef EMU_CPU_H
 #define EMU_CPU_H
 
+#include <stddef.h>
+
 enum {
     FPU_NONE,
     FPU_8087,
@@ -118,6 +120,14 @@ enum {
 #define CPU_SUPPORTS_DYNAREC 1
 #define CPU_REQUIRES_DYNAREC 2
 #define CPU_ALTERNATE_XTAL   4
+
+#if defined(_MSC_VER)
+#    define CPU_ALIGN_MM_SPEC __declspec(align(32))
+#    define CPU_ALIGN_MM_POST
+#else
+#    define CPU_ALIGN_MM_SPEC
+#    define CPU_ALIGN_MM_POST __attribute__((aligned(32)))
+#endif
 #define CPU_FIXED_MULTIPLIER 8
 
 #define CCR1_USE_SMI  (1 << 1)
@@ -378,7 +388,7 @@ typedef struct {
 
     uint16_t MM_w4[8];
 
-    MMX_REG MM[8];
+    CPU_ALIGN_MM_SPEC MMX_REG MM[8] CPU_ALIGN_MM_POST;
 
 #ifdef USE_NEW_DYNAREC
 #    if (defined(__APPLE__) && defined(__aarch64__)) || defined(__aarch64__)
@@ -413,8 +423,36 @@ typedef struct {
 
     uint32_t _smbase;
 
+#undef CPU_ALIGN_MM_SPEC
+#undef CPU_ALIGN_MM_POST
+
     uint32_t x87_op;
 } cpu_state_t;
+
+extern cpu_state_t cpu_state;
+
+static inline MMX_REG *
+cpu_state_mm_ptr(void)
+{
+#if defined(__GNUC__) || defined(__clang__)
+    return (MMX_REG *) __builtin_assume_aligned(cpu_state.MM, 32);
+#else
+    return cpu_state.MM;
+#endif
+}
+
+static inline void
+cpu_state_mm_prefetch(int idx)
+{
+#if defined(__GNUC__) || defined(__clang__)
+    __builtin_prefetch(&cpu_state_mm_ptr()[idx & 7], 0, 3);
+#else
+    (void) idx;
+#endif
+}
+
+#define CPU_STATE_MM(idx) cpu_state_mm_ptr()[(idx) & 7]
+#define CPU_STATE_MM_OFFSET offsetof(cpu_state_t, MM)
 
 #define in_smm   cpu_state._in_smm
 #define smi_line cpu_state._smi_line
@@ -493,7 +531,6 @@ COMPILE_TIME_ASSERT(sizeof(cpu_state_t) <= 128)
 #define cpu_reg cpu_state.rm_data.rm_mod_reg.reg
 
 /* Global variables. */
-extern cpu_state_t cpu_state;
 
 extern const cpu_family_t         cpu_families[];
 extern cpu_family_t              *cpu_f;

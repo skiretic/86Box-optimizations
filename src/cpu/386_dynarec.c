@@ -518,6 +518,7 @@ exec386_dynarec_dyn(void)
     if (valid_block && block->was_recompiled)
 #    endif
     {
+        codegen_cache_metrics.hits++;
         void (*code)(void) = (void *) &block->data[BLOCK_START];
 
 #    ifndef USE_NEW_DYNAREC
@@ -535,6 +536,7 @@ exec386_dynarec_dyn(void)
             cpu_state.pc &= 0xffff;
 #    endif
     } else if (valid_block && !cpu_state.abrt) {
+        codegen_cache_metrics.misses++;
 #    ifdef USE_NEW_DYNAREC
         start_pc                 = cs + cpu_state.pc;
         const int max_block_size = (block->flags & CODEBLOCK_BYTE_MASK) ? ((128 - 25) - (start_pc & 0x3f)) : 1000;
@@ -642,6 +644,7 @@ exec386_dynarec_dyn(void)
         }
 #    endif
     } else if (!cpu_state.abrt) {
+        codegen_cache_metrics.misses++;
         /* Mark block but do not recompile */
 #    ifdef USE_NEW_DYNAREC
         start_pc                 = cs + cpu_state.pc;

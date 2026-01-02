@@ -1,3 +1,8 @@
+#define PRFM_OPTION_PLDL1KEEP 0
+#define PRFM_OPTION_PLDL1STRM 1
+#define PRFM_OPTION_PLDL2KEEP 2
+#define PRFM_OPTION_PLDL2STRM 3
+
 void host_arm64_ADD_IMM(codeblock_t *block, int dst_reg, int src_n_reg, uint32_t imm_data);
 void host_arm64_ADD_REG(codeblock_t *block, int dst_reg, int src_n_reg, int src_m_reg, int shift);
 void host_arm64_ADD_REG_LSR(codeblock_t *block, int dst_reg, int src_n_reg, int src_m_reg, int shift);
@@ -141,6 +146,8 @@ void host_arm64_LDRH_IMM(codeblock_t *block, int dest_reg, int base_reg, int off
 void host_arm64_LDRH_REG(codeblock_t *block, int dest_reg, int base_reg, int offset_reg);
 
 void host_arm64_LDRX_REG_LSL3(codeblock_t *block, int dest_reg, int base_reg, int offset_reg);
+
+void host_arm64_PRFM(codeblock_t *block, int base_reg, int option, int offset);
 
 void host_arm64_LSL(codeblock_t *block, int dst_reg, int src_n_reg, int shift_reg);
 void host_arm64_LSR(codeblock_t *block, int dst_reg, int src_n_reg, int shift_reg);

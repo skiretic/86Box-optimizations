@@ -319,8 +319,8 @@ x87_st_fsave(int reg)
     reg = (cpu_state.TOP + reg) & 7;
 
     if (cpu_state.tag[reg] & TAG_UINT64) {
-        writememl(easeg, cpu_state.eaaddr, cpu_state.MM[reg].q & 0xffffffff);
-        writememl(easeg, cpu_state.eaaddr + 4, cpu_state.MM[reg].q >> 32);
+        writememl(easeg, cpu_state.eaaddr, CPU_STATE_MM(reg).q & 0xffffffff);
+        writememl(easeg, cpu_state.eaaddr + 4, CPU_STATE_MM(reg).q >> 32);
         writememw(easeg, cpu_state.eaaddr + 8, 0x5555);
     } else
         x87_st80(cpu_state.ST[reg]);
@@ -331,7 +331,9 @@ x87_ld_frstor(int reg)
 {
     reg = (cpu_state.TOP + reg) & 7;
 
-    cpu_state.MM[reg].q  = readmemq(easeg, cpu_state.eaaddr);
+    cpu_state_mm_prefetch(reg);
+
+    CPU_STATE_MM(reg).q  = readmemq(easeg, cpu_state.eaaddr);
     cpu_state.MM_w4[reg] = readmemw(easeg, cpu_state.eaaddr + 8);
 
 #ifdef USE_NEW_DYNAREC
@@ -343,7 +345,7 @@ x87_ld_frstor(int reg)
 #ifndef USE_NEW_DYNAREC
         cpu_state.tag[reg] = TAG_UINT64;
 #endif
-        cpu_state.ST[reg] = (double) cpu_state.MM[reg].q;
+        cpu_state.ST[reg] = (double) CPU_STATE_MM(reg).q;
     } else {
 #ifdef USE_NEW_DYNAREC
         cpu_state.tag[reg] &= ~TAG_UINT64;

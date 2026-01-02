@@ -324,7 +324,7 @@ fx_save_stor_common(uint32_t fetchdat, int bits)
         if (cpu_state.ismmx) {
             for (i = 0; i <= 7; i++) {
                 cpu_state.eaaddr = old_eaaddr + 32 + (i << 4);
-                x87_ldmmx(&(cpu_state.MM[i]), &(cpu_state.MM_w4[i]));
+                x87_ldmmx(&(CPU_STATE_MM(i)), &(cpu_state.MM_w4[i]));
             }
         } else {
             for (i = 0; i <= 7; i++) {
@@ -373,7 +373,7 @@ fx_save_stor_common(uint32_t fetchdat, int bits)
         if (cpu_state.ismmx) {
             for (i = 0; i <= 7; i++) {
                 cpu_state.eaaddr = old_eaaddr + 32 + (i << 4);
-                x87_stmmx(cpu_state.MM[i]);
+                x87_stmmx(CPU_STATE_MM(i));
             }
         } else {
             for (i = 0; i <= 7; i++) {

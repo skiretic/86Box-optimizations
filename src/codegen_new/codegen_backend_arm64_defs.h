@@ -114,6 +114,7 @@
 
 #define CODEGEN_HOST_REGS    10
 #define CODEGEN_HOST_FP_REGS 8
+#define CODEGEN_HOST_MMX_REGS 8
 
 extern void *codegen_mem_load_byte;
 extern void *codegen_mem_load_word;

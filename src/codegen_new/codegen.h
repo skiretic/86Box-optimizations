@@ -3,6 +3,7 @@
 
 #include <86box/mem.h>
 #include <stddef.h>
+#include <stdint.h>
 #include "x86_ops.h"
 
 /*Handling self-modifying code (of which there is a lot on x86) :
@@ -59,11 +60,25 @@ typedef struct codeblock_t {
     struct mem_block_t *head_mem_block;
 } codeblock_t;
 
+typedef struct {
+    uint64_t hits;
+    uint64_t misses;
+    uint64_t flushes;
+    uint64_t recompiles;
+    uint64_t blocks_compiled;
+    uint64_t bytes_emitted;
+    uint64_t max_block_bytes;
+} codegen_cache_metrics_t;
+
 extern codeblock_t *codeblock;
 
 extern uint16_t *codeblock_hash;
 
 extern uint8_t *block_write_data;
+
+extern codegen_cache_metrics_t codegen_cache_metrics;
+
+void codegen_cache_metrics_reset(void);
 
 /*Code block uses FPU*/
 #define CODEBLOCK_HAS_FPU 1
