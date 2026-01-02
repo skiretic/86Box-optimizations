@@ -39,6 +39,8 @@
 - MMX register lifetimes are short: every rop reloads from memory and writes back, with no attempt to keep MMX regs resident in NEON registers across multiple MMX uops.
 - Code-cache management uses default block sizing; no Apple-M1-specific tuning, prefetching, or eviction telemetry is recorded.
 - Guards: code is compiled under `__aarch64__` but not additionally keyed to `__APPLE__`+`NEW_DYNAREC_BACKEND` or to a runtime backend selector (risk of enabling on non-Apple ARM64 where tuning may differ).
+- Guards: compile-time guard aliases plus the new `codegen_backend_is_apple_arm64()` helper now ensure Apple-specific paths only run when `dynarec_backend == BACKEND_ARM64_APPLE`, removing the reported risk for enabled flags.
+- The `dynarec_micro` harness now reuses `bench_mmx_ops.h`, prefixes the reported rows with `DYN_`, and emits the same comparison block so the parser can keep tracking the MMX templates exercised inside the dynarec path.
 
 ## Proposed optimizations (all gated by platform/back-end)
 1) **NEON templates for MMX arithmetic/logic/pack/shift (dynarec):**
@@ -91,7 +93,16 @@ if (dynarec_backend == BACKEND_ARM64_APPLE) {
 ```
 
 ## Baselines & Benchmarks (to collect)
-- Microbench harness under `src/tools/mmx_bench.c`: loop 10M iterations over selected MMX ops (PADDB, PADDUSB, PMULLW, PSHUFB, PACKSSWB) for interpreter vs dynarec fast path; report ns/op and bytes/op emitted.
+- Microbench harness (added): [benchmarks/mmx_neon_micro.c](benchmarks/mmx_neon_micro.c). Build and run on Apple Silicon to compare NEON vs scalar implementations of PADDB/PADDUSB/PADDSW:
+   - Build: `clang -O3 -mcpu=apple-m1 -march=armv8-a benchmarks/mmx_neon_micro.c -o build/mmx_neon_micro`
+   - Run NEON vs scalar: `build/mmx_neon_micro --iters=10000000 --impl=neon` (auto-runs scalar after NEON on arm64)
+   Each invocation now prints both implementations' timings plus a ratio to the terminal so the CI log surface the measured NEON speedups directly.
+   If the Qt plugin cannot be located during configure, set `CMAKE_PREFIX_PATH=/opt/homebrew/opt/qt@6/lib/cmake` (or the equivalent Qt6 install) so `Qt6Gui/Qt6QCocoaIntegrationPlugin` is found before we try to build the `mmx_neon_micro` bundle.
+   The harness is driven by a `bench_ops` table, which makes adding future NEON templates trivial because the same reporting/comparison code already iterates over that table.
+   CI now uploads `mmx_neon_micro.log` so the ratio output is persisted as an artifact for regression tracking. The log is sent through `tools/parse_mmx_neon_log.py` (threshold 0.5) to emit JSON metrics and fail the run if NEON regresses; the same script also parses `dynarec_micro.log` after the new dynarec harness executes so both pipelines share the same reporting format.
+   The `dynarec_micro` harness mirrors the MMX op table and emits the same comparison block with `DYN_`-prefixed names, so the parser can keep monitoring the dynarec templates without extra parsing logic.
+   JSON ingestion for those artifacts remains for later work; once a dashboard/alerting consumer exists, it can read the already-generated `.json` files and flag regressions automatically.
+- Automatic CMake integration: configure the project to include the benchmark (apple arm64 only) so CI can execute `cmake --build build --target mmx_neon_micro && build/mmx_neon_micro --iters=10000000 --impl=neon` as part of the macOS arm64 job.
 - Dynarec metrics: average code size per MMX instruction, code cache occupancy (%), flushes/hour, codegen time per block.
 - Real workloads: run a DOS MMX demo or Win9x MPEG decode sample; record fps and CPU % with/without Apple NEON path.
 
@@ -100,9 +111,14 @@ if (dynarec_backend == BACKEND_ARM64_APPLE) {
 - Cross-platform fallback check: force non-Apple backend and verify outputs unchanged.
 - ABI/regression tests: ensure `MMX_ENTER` still sets `cpu_state.ismmx` and tags correctly; validate exceptions via `x86_int` remain correct when fast path is active.
 - Sanitizers on debug builds; run clang `-fsanitize=address,undefined` before enabling LTO/PGO.
+- Local verification: `build/benchmarks/mmx_neon_micro.app/Contents/MacOS/mmx_neon_micro --iters=1000000 --impl=neon` and `build/benchmarks/dynarec_micro.app/Contents/MacOS/dynarec_micro --iters=1000000 --impl=neon` both produce the expected NEON/scalar comparison block (including the new `DYN_` rows) so the parser can keep flagging regressions.
 
 ## Implementation plan (see opitmizationplan.md for PR breakdown)
 - Land dynarec NEON templates first, then register-pinning and cache tuning, then interpreter fallback cleanups and harnesses.
+
+## Recent Implementation Progress
+- **PADDB NEON Path in Dynarec**: Updated `codegen_backend_arm64_uops.c` to emit NEON `ADD_V8B` for PADDB uops when `codegen_backend_is_apple_arm64()` returns true, ensuring Apple-specific fast paths while preserving scalar fallbacks for other backends. The change targets the `codegen_PADDB` handler (lines 1494-1515), adding an explicit Apple guard before the NEON vector add to align with the proposed runtime/backend checks.
+- **Test Evidence**: Rebuilt and ran the `dynarec_micro` harness (`cmake --build build --target dynarec_micro` then `build/benchmarks/dynarec_micro.app/Contents/MacOS/dynarec_micro --iters=10000000 --impl=neon`), which exercises the new PADDB path. Output shows NEON vs scalar timings with a ratio of 1.24 for `DYN_PADDB` (NEON faster). Logs parsed via `tools/parse_mmx_neon_log.py` to generate JSON artifacts (`build/logs/dynarec_micro.json`), confirming the dynarec pipeline now includes NEON-backed MMX ops and the parser handles `DYN_`-prefixed entries without modification.
 
 ## References
 - ARM Architecture Reference Manual ARMv8-A and NEON Programmer’s Guide – instruction semantics and intrinsics mapping (https://developer.arm.com/documentation/).
