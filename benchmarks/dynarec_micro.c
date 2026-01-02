@@ -7,23 +7,23 @@
 #include "bench_mmx_ops.h"
 
 static const bench_op_t dyn_ops[] = {
-    {"DYN_PADDB", bench_mmx_paddb},
-    {"DYN_PSUBB", bench_mmx_psubb},
-    {"DYN_PADDUSB", bench_mmx_paddusb},
-    {"DYN_PADDSW", bench_mmx_paddsw},
-    {"DYN_PMULLW", bench_mmx_pmullw},
-    {"DYN_PMULH", bench_mmx_pmulh},
-    {"DYN_PADDW", bench_mmx_paddw},
-    {"DYN_PADDD", bench_mmx_paddd},
-    {"DYN_PADDSB", bench_mmx_paddsb},
-    {"DYN_PADDUSW", bench_mmx_paddusw},
-    {"DYN_PSUBW", bench_mmx_psubw},
-    {"DYN_PSUBD", bench_mmx_psubd},
-    {"DYN_PSUBSB", bench_mmx_psubsb},
-    {"DYN_PSUBSW", bench_mmx_psubsw},
-    {"DYN_PSUBUSB", bench_mmx_psubusb},
-    {"DYN_PSUBUSW", bench_mmx_psubusw},
-    {"DYN_PMADDWD", bench_mmx_pmaddwd}
+    { "DYN_PADDB",   bench_mmx_paddb   },
+    { "DYN_PSUBB",   bench_mmx_psubb   },
+    { "DYN_PADDUSB", bench_mmx_paddusb },
+    { "DYN_PADDSW",  bench_mmx_paddsw  },
+    { "DYN_PMULLW",  bench_mmx_pmullw  },
+    { "DYN_PMULH",   bench_mmx_pmulh   },
+    { "DYN_PADDW",   bench_mmx_paddw   },
+    { "DYN_PADDD",   bench_mmx_paddd   },
+    { "DYN_PADDSB",  bench_mmx_paddsb  },
+    { "DYN_PADDUSW", bench_mmx_paddusw },
+    { "DYN_PSUBW",   bench_mmx_psubw   },
+    { "DYN_PSUBD",   bench_mmx_psubd   },
+    { "DYN_PSUBSB",  bench_mmx_psubsb  },
+    { "DYN_PSUBSW",  bench_mmx_psubsw  },
+    { "DYN_PSUBUSB", bench_mmx_psubusb },
+    { "DYN_PSUBUSW", bench_mmx_psubusw },
+    { "DYN_PMADDWD", bench_mmx_pmaddwd }
 };
 #define DYN_OP_COUNT (sizeof(dyn_ops) / sizeof(dyn_ops[0]))
 
@@ -49,8 +49,8 @@ static const char *const dyn_op_names[] = {
 
 typedef struct dyn_result {
     impl_kind_t impl;
-    uint64_t iters;
-    double op_ns[DYN_OP_COUNT];
+    uint64_t    iters;
+    double      op_ns[DYN_OP_COUNT];
 } dyn_result_t;
 
 static dyn_result_t
@@ -70,8 +70,8 @@ run_dyn_suite(uint64_t iters, impl_kind_t impl)
 int
 main(int argc, char **argv)
 {
-    uint64_t iters   = 10000000ull;
-    impl_kind_t impl = IMPL_NEON;
+    uint64_t    iters = 30000000ull;
+    impl_kind_t impl  = IMPL_NEON;
 
     for (int i = 1; i < argc; ++i) {
         if (strncmp(argv[i], "--iters=", 8) == 0) {

@@ -78,7 +78,37 @@ extern uint8_t *block_write_data;
 
 extern codegen_cache_metrics_t codegen_cache_metrics;
 
+/* Adaptive cache tuning state for Apple Silicon block reuse optimization */
+#define CACHE_TUNING_WINDOW_SIZE      1000 /* Rolling window for pressure calculation */
+#define CACHE_PRESSURE_HIGH_THRESHOLD 0.90 /* 90% miss rate = high pressure */
+#define CACHE_PRESSURE_LOW_THRESHOLD  0.70 /* 70% miss rate = low pressure */
+
+typedef struct {
+    uint64_t window_hits;    /* Hits in current window */
+    uint64_t window_misses;  /* Misses in current window */
+    uint64_t window_count;   /* Total accesses in window */
+    uint64_t window_flushes; /* Flushes in current window */
+
+    double   cache_pressure;  /* Current pressure (0.0-1.0, higher = more pressure) */
+    uint64_t total_evictions; /* Total blocks evicted */
+    uint64_t reuse_saved;     /* Blocks saved from eviction */
+
+    int      enabled;              /* 1 if tuning active (Apple ARM64 only) */
+    uint64_t last_adjustment_time; /* Timestamp of last tuning adjustment */
+} codegen_cache_tuning_state_t;
+
+extern codegen_cache_tuning_state_t codegen_cache_tuning;
+
 void codegen_cache_metrics_reset(void);
+void codegen_cache_metrics_get(codegen_cache_metrics_t *out_metrics);
+void codegen_cache_metrics_print_summary(void);
+
+/* Adaptive cache tuning functions */
+void   codegen_cache_tuning_init(void);
+void   codegen_cache_tuning_update(void);
+double codegen_cache_compute_pressure(void);
+int    codegen_cache_should_preserve_block(codeblock_t *block);
+void   codegen_cache_tuning_print_summary(void);
 
 /*Code block uses FPU*/
 #define CODEBLOCK_HAS_FPU 1

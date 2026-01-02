@@ -1,0 +1,54 @@
+impl=neon iters=30000000
+  DYN_PADDB: 0.928 ns/iter
+  DYN_PSUBB: 0.812 ns/iter
+  DYN_PADDUSB: 1.006 ns/iter
+  DYN_PADDSW: 0.962 ns/iter
+  DYN_PMULLW: 0.961 ns/iter
+  DYN_PMULH: 1.949 ns/iter
+  DYN_PADDW: 0.637 ns/iter
+  DYN_PADDD: 2.641 ns/iter
+  DYN_PADDSB: 0.977 ns/iter
+  DYN_PADDUSW: 1.005 ns/iter
+  DYN_PSUBW: 0.642 ns/iter
+  DYN_PSUBD: 133.800 ns/iter
+  DYN_PSUBSB: 0.970 ns/iter
+  DYN_PSUBSW: 0.963 ns/iter
+  DYN_PSUBUSB: 0.959 ns/iter
+  DYN_PSUBUSW: 0.991 ns/iter
+  DYN_PMADDWD: 1.585 ns/iter
+impl=scalar iters=30000000
+  DYN_PADDB: 0.650 ns/iter
+  DYN_PSUBB: 0.331 ns/iter
+  DYN_PADDUSB: 0.316 ns/iter
+  DYN_PADDSW: 0.336 ns/iter
+  DYN_PMULLW: 1.273 ns/iter
+  DYN_PMULH: 0.998 ns/iter
+  DYN_PADDW: 0.654 ns/iter
+  DYN_PADDD: 2.342 ns/iter
+  DYN_PADDSB: 1.964 ns/iter
+  DYN_PADDUSW: 1.274 ns/iter
+  DYN_PSUBW: 0.642 ns/iter
+  DYN_PSUBD: 133.496 ns/iter
+  DYN_PSUBSB: 1.945 ns/iter
+  DYN_PSUBSW: 1.917 ns/iter
+  DYN_PSUBUSB: 1.631 ns/iter
+  DYN_PSUBUSW: 1.304 ns/iter
+  DYN_PMADDWD: 4.220 ns/iter
+comparison (primary/baseline)
+  DYN_PADDB: 1.43
+  DYN_PSUBB: 2.45
+  DYN_PADDUSB: 3.19
+  DYN_PADDSW: 2.86
+  DYN_PMULLW: 0.75
+  DYN_PMULH: 1.95
+  DYN_PADDW: 0.97
+  DYN_PADDD: 1.13
+  DYN_PADDSB: 0.50
+  DYN_PADDUSW: 0.79
+  DYN_PSUBW: 1.00
+  DYN_PSUBD: 1.00
+  DYN_PSUBSB: 0.50
+  DYN_PSUBSW: 0.50
+  DYN_PSUBUSB: 0.59
+  DYN_PSUBUSW: 0.76
+  DYN_PMADDWD: 0.38

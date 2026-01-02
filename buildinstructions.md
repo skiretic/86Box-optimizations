@@ -57,7 +57,20 @@ These steps reproduce the working build of `86Box.app` described earlier. Feed t
    * Running the app ensures the UI, audio, and optional serial/OPl accessories load correctly.
    * If additional SDKs (Vulkan, MoltenVK, etc.) are needed, install their headers/libraries and enable the matching CMake options before reconfiguring.
 
+## Running Benchmarks
+After building, verify the optimizations with the benchmark suite:
+```sh
+# MMX NEON vs Scalar performance (30M iterations)
+./build/benchmarks/mmx_neon_micro.app/Contents/MacOS/mmx_neon_micro --iters=30000000 --impl=neon
+
+# Dynarec IR integration testing (30M iterations)
+./build/benchmarks/dynarec_micro.app/Contents/MacOS/dynarec_micro --iters=30000000 --impl=neon
+
+# IR validation and cache metrics sanity check
+./build/benchmarks/dynarec_sanity.app/Contents/MacOS/dynarec_sanity
+```
+
 Notes:
 - All relevant Build instructions reflect the final working configuration described earlier; no extra patches are required besides the Qt plugin copy fix introduced in `src/qt/CMakeLists.txt`.
 - Use Ninja for builds to ensure fast incremental rebuilds; switching generators requires adjusting the `cmake` configure/build commands accordingly.
-- **Benchmark Limitation**: When `QT=ON`, the `dynarec_test` benchmark application will not be built due to linking conflicts with the macOS bundle. To build all benchmarks including `dynarec_test`, configure with `QT=OFF` and build the benchmarks separately.  
+- **Benchmark Suite**: Use `mmx_neon_micro` and `dynarec_micro` for performance verification, and `dynarec_sanity` for IR validation. Executables are in `build/benchmarks/*.app/Contents/MacOS/`.

@@ -1503,12 +1503,12 @@ codegen_PSHUFB(codeblock_t *block, uop_t *uop)
     if (REG_IS_Q(dest_size) && REG_IS_Q(src_size_a) && REG_IS_Q(src_size_b)) {
         // PSHUFB: shuffle bytes from src_a using indices from src_b
         // If index & 0x80, result = 0, else result = src_a[index & 7]
-        host_arm64_AND_IMM(block, REG_V_TEMP, src_reg_b, 7);  // mask indices to 0-7
-        host_arm64_TBX1_V8B(block, dest_reg, src_reg_a, REG_V_TEMP);  // dest = lookup
+        host_arm64_AND_IMM(block, REG_V_TEMP, src_reg_b, 7);         // mask indices to 0-7
+        host_arm64_TBX1_V8B(block, dest_reg, src_reg_a, REG_V_TEMP); // dest = lookup
         // Now handle high bit: if set, set to 0
-        host_arm64_AND_IMM(block, REG_V_TEMP2, src_reg_b, 0x80);  // REG_V_TEMP2 = mask where high bit set
-        host_arm64_NOT_V8B(block, REG_V_TEMP, REG_V_TEMP2);  // REG_V_TEMP = ~mask
-        host_arm64_BSL_V8B(block, REG_V_TEMP, dest_reg, REG_V_TEMP);  // REG_V_TEMP = dest & ~mask
+        host_arm64_AND_IMM(block, REG_V_TEMP2, src_reg_b, 0x80);     // REG_V_TEMP2 = mask where high bit set
+        host_arm64_NOT_V8B(block, REG_V_TEMP, REG_V_TEMP2);          // REG_V_TEMP = ~mask
+        host_arm64_BSL_V8B(block, REG_V_TEMP, dest_reg, REG_V_TEMP); // REG_V_TEMP = dest & ~mask
         host_arm64_INS_D(block, dest_reg, REG_V_TEMP, 0, 0);
     } else
         fatal("PSHUFB %02x %02x %02x\n", uop->dest_reg_a_real, uop->src_reg_a_real, uop->src_reg_b_real);
@@ -3570,8 +3570,25 @@ codegen_direct_read_double(codeblock_t *block, int host_reg, void *p)
 static inline void
 codegen_prefetch_cpu_mmx_state(codeblock_t *block)
 {
+    /* Base prefetch hints for all ARM64 platforms - cover 64-byte MMX state */
     host_arm64_PRFM(block, REG_CPUSTATE, PRFM_OPTION_PLDL1KEEP, CPU_STATE_MM_OFFSET);
     host_arm64_PRFM(block, REG_CPUSTATE, PRFM_OPTION_PLDL1KEEP, CPU_STATE_MM_OFFSET + 32);
+
+#    if defined(__APPLE__) && defined(__aarch64__) && defined(NEW_DYNAREC_BACKEND)
+    /* Apple Silicon enhancement: Add L2 prefetch for next cache line to reduce latency
+     * on sequential MMX operations. Apple M1/M2/M3 have 128-byte cache lines,
+     * so prefetching at +64 covers potential sequential access patterns.
+     * Use PLDL2KEEP for next-line to keep in L2 without polluting L1. */
+    if (codegen_backend_is_apple_arm64()) {
+        host_arm64_PRFM(block, REG_CPUSTATE, PRFM_OPTION_PLDL2KEEP, CPU_STATE_MM_OFFSET + 64);
+
+        /* Prefetch FPU state at +96 if this is an FPU block, as MMX/FPU state
+         * coexistence means we'll likely touch FPU registers soon */
+        if (block->flags & CODEBLOCK_HAS_FPU) {
+            host_arm64_PRFM(block, REG_CPUSTATE, PRFM_OPTION_PLDL2KEEP, CPU_STATE_MM_OFFSET + 96);
+        }
+    }
+#    endif
 }
 void
 codegen_direct_read_st_8(codeblock_t *block, int host_reg, void *base, int reg_idx)

@@ -26,17 +26,17 @@
 
 uint8_t *block_write_data = NULL;
 
-int      codegen_flat_ds;
-int      codegen_flat_ss;
-int      mmx_ebx_ecx_loaded;
+int                     codegen_flat_ds;
+int                     codegen_flat_ss;
+int                     mmx_ebx_ecx_loaded;
 codegen_cache_metrics_t codegen_cache_metrics;
-int      codegen_flags_changed = 0;
-int      codegen_fpu_entered   = 0;
-int      codegen_mmx_entered   = 0;
-int      codegen_fpu_loaded_iq[8];
-x86seg  *op_ea_seg;
-int      op_ssegs;
-uint32_t op_old_pc;
+int                     codegen_flags_changed = 0;
+int                     codegen_fpu_entered   = 0;
+int                     codegen_mmx_entered   = 0;
+int                     codegen_fpu_loaded_iq[8];
+x86seg                 *op_ea_seg;
+int                     op_ssegs;
+uint32_t                op_old_pc;
 
 uint32_t recomp_page = -1;
 
@@ -234,6 +234,7 @@ codegen_init(void)
 
     codegen_backend_init();
     codegen_cache_metrics_reset();
+    codegen_cache_tuning_init(); /* Initialize adaptive cache tuning */
     block_free_list = 0;
     for (uint32_t c = 0; c < BLOCK_SIZE; c++)
         block_free_list_add(&codeblock[c]);
@@ -388,6 +389,12 @@ invalidate_block(codeblock_t *block)
 
     codegen_cache_metrics.flushes++;
 
+    /* Track flush in tuning window */
+    if (codegen_cache_tuning.enabled) {
+        codegen_cache_tuning.window_flushes++;
+        codegen_cache_tuning_update();
+    }
+
 #ifndef RELEASE_BUILD
     if (block->flags & CODEBLOCK_IN_DIRTY_LIST)
         fatal("invalidate_block: already in dirty list\n");
@@ -430,6 +437,158 @@ void
 codegen_cache_metrics_reset(void)
 {
     memset(&codegen_cache_metrics, 0, sizeof(codegen_cache_metrics));
+}
+
+void
+codegen_cache_metrics_get(codegen_cache_metrics_t *out_metrics)
+{
+    if (out_metrics)
+        memcpy(out_metrics, &codegen_cache_metrics, sizeof(codegen_cache_metrics));
+}
+
+void
+codegen_cache_metrics_print_summary(void)
+{
+    uint64_t total_accesses  = codegen_cache_metrics.hits + codegen_cache_metrics.misses;
+    double   hit_ratio       = total_accesses > 0 ? (double) codegen_cache_metrics.hits / (double) total_accesses * 100.0 : 0.0;
+    double   avg_block_bytes = codegen_cache_metrics.blocks_compiled > 0
+          ? (double) codegen_cache_metrics.bytes_emitted / (double) codegen_cache_metrics.blocks_compiled
+          : 0.0;
+
+    pclog("=== Cache Metrics Summary ===\n");
+    pclog("  Hits:            %llu\n", codegen_cache_metrics.hits);
+    pclog("  Misses:          %llu\n", codegen_cache_metrics.misses);
+    pclog("  Hit Ratio:       %.2f%%\n", hit_ratio);
+    pclog("  Flushes:         %llu\n", codegen_cache_metrics.flushes);
+    pclog("  Recompiles:      %llu\n", codegen_cache_metrics.recompiles);
+    pclog("  Blocks Compiled: %llu\n", codegen_cache_metrics.blocks_compiled);
+    pclog("  Bytes Emitted:   %llu\n", codegen_cache_metrics.bytes_emitted);
+    pclog("  Avg Block Bytes: %.2f\n", avg_block_bytes);
+    pclog("  Max Block Bytes: %llu\n", codegen_cache_metrics.max_block_bytes);
+    pclog("=============================\n");
+}
+
+/* Adaptive cache tuning state (Apple Silicon only) */
+codegen_cache_tuning_state_t codegen_cache_tuning;
+
+void
+codegen_cache_tuning_init(void)
+{
+    memset(&codegen_cache_tuning, 0, sizeof(codegen_cache_tuning));
+
+#if defined(__APPLE__) && defined(__aarch64__) && defined(NEW_DYNAREC_BACKEND)
+    if (codegen_backend_is_apple_arm64()) {
+        codegen_cache_tuning.enabled = 1;
+        pclog("Adaptive cache tuning enabled for Apple ARM64\n");
+    }
+#endif
+}
+
+void
+codegen_cache_tuning_update(void)
+{
+    if (!codegen_cache_tuning.enabled)
+        return;
+
+    codegen_cache_tuning.window_count++;
+
+    /* Update rolling window every CACHE_TUNING_WINDOW_SIZE accesses */
+    if (codegen_cache_tuning.window_count >= CACHE_TUNING_WINDOW_SIZE) {
+        /* Calculate pressure from current window */
+        codegen_cache_tuning.cache_pressure = codegen_cache_compute_pressure();
+
+        /* Reset window counters */
+        codegen_cache_tuning.window_hits          = 0;
+        codegen_cache_tuning.window_misses        = 0;
+        codegen_cache_tuning.window_flushes       = 0;
+        codegen_cache_tuning.window_count         = 0;
+        codegen_cache_tuning.last_adjustment_time = codegen_cache_metrics.blocks_compiled;
+    }
+}
+
+double
+codegen_cache_compute_pressure(void)
+{
+    uint64_t total = codegen_cache_tuning.window_hits + codegen_cache_tuning.window_misses;
+
+    if (total == 0)
+        return 0.0;
+
+    /* Pressure is miss ratio (higher misses = higher pressure) */
+    double miss_ratio = (double) codegen_cache_tuning.window_misses / (double) total;
+
+    /* Factor in flush rate (more flushes = higher pressure) */
+    double flush_factor = codegen_cache_tuning.window_flushes > 0
+        ? ((double) codegen_cache_tuning.window_flushes / CACHE_TUNING_WINDOW_SIZE) * 0.5
+        : 0.0;
+
+    /* Combine factors: miss ratio (70%) + flush factor (30%) */
+    double pressure = (miss_ratio * 0.7) + (flush_factor * 0.3);
+
+    /* Clamp to [0.0, 1.0] */
+    if (pressure > 1.0)
+        pressure = 1.0;
+    if (pressure < 0.0)
+        pressure = 0.0;
+
+    return pressure;
+}
+
+int
+codegen_cache_should_preserve_block(codeblock_t *block)
+{
+    if (!codegen_cache_tuning.enabled)
+        return 0; /* No special preservation without tuning */
+
+    /* Under low pressure, be more aggressive with eviction */
+    if (codegen_cache_tuning.cache_pressure < CACHE_PRESSURE_LOW_THRESHOLD)
+        return 0;
+
+    /* Under high pressure, preserve recently used blocks */
+    if (codegen_cache_tuning.cache_pressure >= CACHE_PRESSURE_HIGH_THRESHOLD) {
+        /* Simple heuristic: preserve if block was recently compiled
+         * (within last 10% of total blocks) */
+        uint64_t block_age        = codegen_cache_metrics.blocks_compiled - block->pc;
+        uint64_t recent_threshold = codegen_cache_metrics.blocks_compiled / 10;
+
+        if (block_age < recent_threshold) {
+            codegen_cache_tuning.reuse_saved++;
+            return 1; /* Preserve this block */
+        }
+    }
+
+    codegen_cache_tuning.total_evictions++;
+    return 0; /* Evict as normal */
+}
+
+void
+codegen_cache_tuning_print_summary(void)
+{
+    if (!codegen_cache_tuning.enabled) {
+        pclog("Adaptive cache tuning: disabled\n");
+        return;
+    }
+
+    double hit_ratio = (codegen_cache_tuning.window_hits + codegen_cache_tuning.window_misses) > 0
+        ? (double) codegen_cache_tuning.window_hits / (double) (codegen_cache_tuning.window_hits + codegen_cache_tuning.window_misses) * 100.0
+        : 0.0;
+
+    pclog("=== Adaptive Cache Tuning ===\n");
+    pclog("  Status:          %s\n", codegen_cache_tuning.enabled ? "ENABLED" : "DISABLED");
+    pclog("  Cache Pressure:  %.2f%% (%.2f = low, %.2f = high)\n",
+          codegen_cache_tuning.cache_pressure * 100.0,
+          CACHE_PRESSURE_LOW_THRESHOLD * 100.0,
+          CACHE_PRESSURE_HIGH_THRESHOLD * 100.0);
+    pclog("  Window Hits:     %llu\n", codegen_cache_tuning.window_hits);
+    pclog("  Window Misses:   %llu\n", codegen_cache_tuning.window_misses);
+    pclog("  Window Hit Rate: %.2f%%\n", hit_ratio);
+    pclog("  Total Evictions: %llu\n", codegen_cache_tuning.total_evictions);
+    pclog("  Blocks Saved:    %llu\n", codegen_cache_tuning.reuse_saved);
+    if (codegen_cache_tuning.total_evictions > 0) {
+        double save_rate = (double) codegen_cache_tuning.reuse_saved / (double) (codegen_cache_tuning.total_evictions + codegen_cache_tuning.reuse_saved) * 100.0;
+        pclog("  Save Rate:       %.2f%%\n", save_rate);
+    }
+    pclog("=============================\n");
 }
 
 static void

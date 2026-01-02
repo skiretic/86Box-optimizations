@@ -7,15 +7,15 @@
 #include "bench_mmx_ops.h"
 
 static const bench_op_t bench_ops[] = {
-    {"PADDB", bench_mmx_paddb},
-    {"PSUBB", bench_mmx_psubb},
-    {"PADDUSB", bench_mmx_paddusb},
-    {"PADDSW", bench_mmx_paddsw},
-    {"PMULLW", bench_mmx_pmullw},
-    {"PMULH", bench_mmx_pmulh},
-    {"PACKSSWB", bench_mmx_packsswb},
-    {"PACKUSWB", bench_mmx_packuswb},
-    {"PSHUFB", bench_mmx_pshufb}
+    { "PADDB",    bench_mmx_paddb    },
+    { "PSUBB",    bench_mmx_psubb    },
+    { "PADDUSB",  bench_mmx_paddusb  },
+    { "PADDSW",   bench_mmx_paddsw   },
+    { "PMULLW",   bench_mmx_pmullw   },
+    { "PMULH",    bench_mmx_pmulh    },
+    { "PACKSSWB", bench_mmx_packsswb },
+    { "PACKUSWB", bench_mmx_packuswb },
+    { "PSHUFB",   bench_mmx_pshufb   }
 };
 #define BENCH_OP_COUNT (sizeof(bench_ops) / sizeof(bench_ops[0]))
 
@@ -33,8 +33,8 @@ static const char *const bench_names[] = {
 
 typedef struct bench_result {
     impl_kind_t impl;
-    uint64_t iters;
-    double op_ns[BENCH_OP_COUNT];
+    uint64_t    iters;
+    double      op_ns[BENCH_OP_COUNT];
 } bench_result_t;
 
 static bench_result_t
@@ -54,7 +54,7 @@ run_suite(uint64_t iters, impl_kind_t impl)
 int
 main(int argc, char **argv)
 {
-    uint64_t iters    = 10000000ull;
+    uint64_t    iters = 30000000ull;
     impl_kind_t impl  = IMPL_NEON;
 
     for (int i = 1; i < argc; ++i) {

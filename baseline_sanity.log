@@ -1,0 +1,15 @@
+=== 86Box Dynarec Sanity Tool ===
+Platform: Apple Silicon (ARM64) Mock Mode
+
+--- Testing IR Generation ---
+SUCCESS: IR context initialized.
+Verifying IR data structure integrity...
+SUCCESS: Initial uOP count is 0.
+Generating a dummy uOP (PADDB)...
+SUCCESS: PADDB uOP generated.
+
+--- Testing Cache Metrics Infrastructure ---
+SUCCESS: Cache metrics reset to zero.
+SUCCESS: Cache metrics retrieval works.
+
+Sanity checks complete.

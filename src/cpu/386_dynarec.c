@@ -387,11 +387,11 @@ block_ended:
     cpu_end_block_after_ins = 0;
 }
 
-#if defined(__linux__) && !defined(__clang__) && defined(USE_NEW_DYNAREC)
+#    if defined(__linux__) && !defined(__clang__) && defined(USE_NEW_DYNAREC)
 static inline void __attribute__((optimize("O2")))
-#else
+#    else
 static __inline void
-#endif
+#    endif
 exec386_dynarec_dyn(void)
 {
     uint32_t start_pc  = 0;
@@ -422,8 +422,7 @@ exec386_dynarec_dyn(void)
             int      byte_offset = (phys_addr >> PAGE_BYTE_MASK_SHIFT) & PAGE_BYTE_MASK_OFFSET_MASK;
             uint64_t byte_mask   = 1ULL << (phys_addr & PAGE_BYTE_MASK_MASK);
 
-            if ((page->code_present_mask & mask) ||
-                ((page->mem != page_ff) && (page->byte_code_present_mask[byte_offset] & byte_mask)))
+            if ((page->code_present_mask & mask) || ((page->mem != page_ff) && (page->byte_code_present_mask[byte_offset] & byte_mask)))
 #    else
             if (page->code_present_mask[(phys_addr >> PAGE_MASK_INDEX_SHIFT) & PAGE_MASK_INDEX_MASK] & mask)
 #    endif
@@ -519,6 +518,11 @@ exec386_dynarec_dyn(void)
 #    endif
     {
         codegen_cache_metrics.hits++;
+        /* Update tuning window */
+        if (codegen_cache_tuning.enabled) {
+            codegen_cache_tuning.window_hits++;
+            codegen_cache_tuning_update();
+        }
         void (*code)(void) = (void *) &block->data[BLOCK_START];
 
 #    ifndef USE_NEW_DYNAREC
@@ -537,6 +541,12 @@ exec386_dynarec_dyn(void)
 #    endif
     } else if (valid_block && !cpu_state.abrt) {
         codegen_cache_metrics.misses++;
+
+        /* Update tuning window */
+        if (codegen_cache_tuning.enabled) {
+            codegen_cache_tuning.window_misses++;
+            codegen_cache_tuning_update();
+        }
 #    ifdef USE_NEW_DYNAREC
         start_pc                 = cs + cpu_state.pc;
         const int max_block_size = (block->flags & CODEBLOCK_BYTE_MASK) ? ((128 - 25) - (start_pc & 0x3f)) : 1000;
@@ -591,10 +601,10 @@ exec386_dynarec_dyn(void)
                 cpu_state.pc &= 0xffff;
 #    endif
 
-                /* Cap source code at 4000 bytes per block; this
-                   will prevent any block from spanning more than
-                   2 pages. In practice this limit will never be
-                   hit, as host block size is only 2kB*/
+            /* Cap source code at 4000 bytes per block; this
+               will prevent any block from spanning more than
+               2 pages. In practice this limit will never be
+               hit, as host block size is only 2kB*/
 #    ifdef USE_NEW_DYNAREC
             if (((cs + cpu_state.pc) - start_pc) >= max_block_size)
 #    else
@@ -645,6 +655,11 @@ exec386_dynarec_dyn(void)
 #    endif
     } else if (!cpu_state.abrt) {
         codegen_cache_metrics.misses++;
+        /* Update tuning window */
+        if (codegen_cache_tuning.enabled) {
+            codegen_cache_tuning.window_misses++;
+            codegen_cache_tuning_update();
+        }
         /* Mark block but do not recompile */
 #    ifdef USE_NEW_DYNAREC
         start_pc                 = cs + cpu_state.pc;
@@ -694,10 +709,10 @@ exec386_dynarec_dyn(void)
                 cpu_state.pc &= 0xffff;
 #    endif
 
-                /* Cap source code at 4000 bytes per block; this
-                   will prevent any block from spanning more than
-                   2 pages. In practice this limit will never be
-                   hit, as host block size is only 2kB */
+            /* Cap source code at 4000 bytes per block; this
+               will prevent any block from spanning more than
+               2 pages. In practice this limit will never be
+               hit, as host block size is only 2kB */
 #    ifdef USE_NEW_DYNAREC
             if (((cs + cpu_state.pc) - start_pc) >= max_block_size)
 #    else
@@ -782,7 +797,7 @@ exec386_dynarec(int32_t cycs)
             cycles_old       = cycles;
             oldtsc           = tsc;
             tsc_old          = tsc;
-            if (cpu_force_interpreter || cpu_override_dynarec ||  (!CACHE_ON())) /*Interpret block*/
+            if (cpu_force_interpreter || cpu_override_dynarec || (!CACHE_ON())) /*Interpret block*/
             {
                 exec386_dynarec_int();
             } else {
@@ -822,7 +837,7 @@ exec386_dynarec(int32_t cycs)
                 oldcs = CS;
 #    endif
                 cpu_state.oldpc = cpu_state.pc;
-                new_ne = 0;
+                new_ne          = 0;
                 x86_int(16);
             }
 
@@ -982,7 +997,7 @@ exec386(int32_t cycs)
 block_ended:
 #endif
             if (cpu_state.abrt) {
-                uint8_t oop    = opcode;
+                uint8_t oop = opcode;
                 flags_rebuild();
                 tempi          = cpu_state.abrt & ABRT_MASK;
                 cpu_state.abrt = 0;
@@ -1007,7 +1022,7 @@ block_ended:
                 }
 
 #ifdef USE_DEBUG_REGS_486
-                if (is386 && !x86_was_reset  && ins_fetch_fault)
+                if (is386 && !x86_was_reset && ins_fetch_fault)
                     x86gen();
 #endif
             } else if (new_ne) {
@@ -1022,8 +1037,10 @@ block_ended:
             } else if (trap) {
                 flags_rebuild();
 #ifdef USE_DEBUG_REGS_486
-                if (trap & 2) dr[6] |= 0x8000;
-                if (trap & 1) dr[6] |= 0x4000;
+                if (trap & 2)
+                    dr[6] |= 0x8000;
+                if (trap & 1)
+                    dr[6] |= 0x4000;
 #endif
                 trap = 0;
 #ifndef USE_NEW_DYNAREC

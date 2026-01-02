@@ -66,6 +66,5 @@ CMakeLists.txt.user
 
 # Jetbrains CLion
 .idea
-SESSION_SUMMARY.md
 build/
 dist/
