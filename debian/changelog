@@ -1,5 +1,11 @@
 86box (5.4) UNRELEASED; urgency=medium
 
+  * Implemented ARM64 MMX instruction optimizations
+  * Added benchmarking tools for MMX and NEON operations
+  * Updated build instructions and optimization reports
+  * Refactored ARM64 codegen backend
+  * Updated documentation and code citations
+
   * Bump release.
 
  -- Jasmine Iwanek <jriwanek@gmail.com>  Tue, 23 Dec 2025 00:27:45 +0100
