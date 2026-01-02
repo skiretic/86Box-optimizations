@@ -380,6 +380,30 @@ static uint8_t opcode_0f_modrm[256] = {
 };
 // clang-format on
 
+/* SSSE3 0F 38 ModRM table - indicates which opcodes use ModRM byte */
+static uint8_t opcode_0f38_modrm[256] = {
+    1, 1, 1, 1, 0, 0, 0, 0,  0, 0, 0, 0,  0, 0, 0, 0, /*00*/
+    1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, /*10*/
+    1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, /*20*/
+    1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, /*30*/
+
+    1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, /*40*/
+    1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, /*50*/
+    1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, /*60*/
+    1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, /*70*/
+
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, /*80*/
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, /*90*/
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, /*a0*/
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, /*b0*/
+
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, /*c0*/
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, /*d0*/
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, /*e0*/
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, /*f0*/
+};
+// clang-format on
+
 void
 codegen_generate_call(uint8_t opcode, OpFn op, uint32_t fetchdat, uint32_t new_pc, uint32_t old_pc)
 {
@@ -667,6 +691,28 @@ generate_call:
             opcode_mask        = 0xff;
         }
     }
+
+    if (op_table == x86_dynarec_opcodes_0f && opcode == 0x38) {
+#if defined(__APPLE__) && defined(__aarch64__) && defined(NEW_DYNAREC_BACKEND)
+        if (codegen_backend_is_apple_arm64()) {
+            /*SSSE3 0F 38 opcodes - second byte is the actual opcode*/
+            next_pc = op_pc + 1;
+            opcode = fastreadb(cs + next_pc);
+            
+            op_table           = x86_dynarec_opcodes_0f38;
+            recomp_op_table    = NULL; /* No recompiler for 0F 38 yet */
+            recomp_opcode_mask = 0xff;
+            opcode_mask        = 0xff;
+            over              = 1;
+        } else {
+            /* Generic ARM64 doesn't support SSSE3 0F 38 opcodes */
+            op = x86_dynarec_opcodes_3DNOW[0xff]; /* Illegal instruction */
+        }
+#else
+        /* Non-ARM64 platforms don't support SSSE3 0F 38 opcodes */
+        op = x86_dynarec_opcodes_3DNOW[0xff]; /* Illegal instruction */
+#endif
+    }
     codegen_mark_code_present(block, cs + old_pc, (op_pc - old_pc) - pc_off);
     if (op87 != 0x0000) {
         uop_MOV_IMM(ir, IREG_x87_op, op87);
@@ -708,7 +754,7 @@ codegen_skip:
     else
         op = op_table[((opcode >> opcode_shift) | op_32) & opcode_mask];
 
-    if (!test_modrm || (op_table == x86_dynarec_opcodes && opcode_modrm[opcode]) || (op_table == x86_dynarec_opcodes_0f && opcode_0f_modrm[opcode]) || (op_table == x86_dynarec_opcodes_3DNOW)) {
+    if (!test_modrm || (op_table == x86_dynarec_opcodes && opcode_modrm[opcode]) || (op_table == x86_dynarec_opcodes_0f && opcode_0f_modrm[opcode]) || (op_table == x86_dynarec_opcodes_0f38 && opcode_0f38_modrm[opcode]) || (op_table == x86_dynarec_opcodes_3DNOW)) {
         int stack_offset = 0;
 
         if (op_table == x86_dynarec_opcodes && opcode == 0x8f) /*POP*/

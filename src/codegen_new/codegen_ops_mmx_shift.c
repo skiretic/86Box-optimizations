@@ -20,22 +20,23 @@
 uint32_t
 ropPSxxW_imm(codeblock_t *block, ir_data_t *ir, UNUSED(uint8_t opcode), uint32_t fetchdat, UNUSED(uint32_t op_32), uint32_t op_pc)
 {
-    int reg   = fetchdat & 7;
-    int op    = fetchdat & 0x38;
-    int shift = fastreadb(cs + op_pc + 1);
+    int reg        = fetchdat & 7;
+    int op         = fetchdat & 0x38;
+    int shift_raw  = fastreadb(cs + op_pc + 1);
+    int shift_mask = shift_raw & 0x0f; /* architectural mask for word elements */
 
     if (codegen_backend_is_apple_arm64()) {
         uop_MMX_ENTER(ir);
         codegen_mark_code_present(block, cs + op_pc, 1);
         switch (op) {
             case 0x10: /*PSRLW*/
-                uop_PSRLW_IMM(ir, IREG_MM(reg), IREG_MM(reg), shift);
+                uop_PSRLW_IMM(ir, IREG_MM(reg), IREG_MM(reg), shift_mask);
                 break;
             case 0x20: /*PSRAW*/
-                uop_PSRAW_IMM(ir, IREG_MM(reg), IREG_MM(reg), shift);
+                uop_PSRAW_IMM(ir, IREG_MM(reg), IREG_MM(reg), shift_mask);
                 break;
             case 0x30: /*PSLLW*/
-                uop_PSLLW_IMM(ir, IREG_MM(reg), IREG_MM(reg), shift);
+                uop_PSLLW_IMM(ir, IREG_MM(reg), IREG_MM(reg), shift_mask);
                 break;
             default:
                 return 0;
@@ -49,13 +50,13 @@ ropPSxxW_imm(codeblock_t *block, ir_data_t *ir, UNUSED(uint8_t opcode), uint32_t
     codegen_mark_code_present(block, cs + op_pc, 1);
     switch (op) {
         case 0x10: /*PSRLW*/
-            uop_PSRLW_IMM(ir, IREG_MM(reg), IREG_MM(reg), shift);
+            uop_PSRLW_IMM(ir, IREG_MM(reg), IREG_MM(reg), shift_mask);
             break;
         case 0x20: /*PSRAW*/
-            uop_PSRAW_IMM(ir, IREG_MM(reg), IREG_MM(reg), shift);
+            uop_PSRAW_IMM(ir, IREG_MM(reg), IREG_MM(reg), shift_mask);
             break;
         case 0x30: /*PSLLW*/
-            uop_PSLLW_IMM(ir, IREG_MM(reg), IREG_MM(reg), shift);
+            uop_PSLLW_IMM(ir, IREG_MM(reg), IREG_MM(reg), shift_mask);
             break;
         default:
             return 0;
@@ -67,22 +68,23 @@ ropPSxxW_imm(codeblock_t *block, ir_data_t *ir, UNUSED(uint8_t opcode), uint32_t
 uint32_t
 ropPSxxD_imm(codeblock_t *block, ir_data_t *ir, UNUSED(uint8_t opcode), uint32_t fetchdat, UNUSED(uint32_t op_32), uint32_t op_pc)
 {
-    int reg   = fetchdat & 7;
-    int op    = fetchdat & 0x38;
-    int shift = fastreadb(cs + op_pc + 1);
+    int reg        = fetchdat & 7;
+    int op         = fetchdat & 0x38;
+    int shift_raw  = fastreadb(cs + op_pc + 1);
+    int shift_mask = shift_raw & 0x1f; /* architectural mask for dword elements */
 
     if (codegen_backend_is_apple_arm64()) {
         uop_MMX_ENTER(ir);
         codegen_mark_code_present(block, cs + op_pc, 1);
         switch (op) {
             case 0x10: /*PSRLD*/
-                uop_PSRLD_IMM(ir, IREG_MM(reg), IREG_MM(reg), shift);
+                uop_PSRLD_IMM(ir, IREG_MM(reg), IREG_MM(reg), shift_mask);
                 break;
             case 0x20: /*PSRAD*/
-                uop_PSRAD_IMM(ir, IREG_MM(reg), IREG_MM(reg), shift);
+                uop_PSRAD_IMM(ir, IREG_MM(reg), IREG_MM(reg), shift_mask);
                 break;
             case 0x30: /*PSLLD*/
-                uop_PSLLD_IMM(ir, IREG_MM(reg), IREG_MM(reg), shift);
+                uop_PSLLD_IMM(ir, IREG_MM(reg), IREG_MM(reg), shift_mask);
                 break;
             default:
                 return 0;
@@ -96,13 +98,13 @@ ropPSxxD_imm(codeblock_t *block, ir_data_t *ir, UNUSED(uint8_t opcode), uint32_t
     codegen_mark_code_present(block, cs + op_pc, 1);
     switch (op) {
         case 0x10: /*PSRLD*/
-            uop_PSRLD_IMM(ir, IREG_MM(reg), IREG_MM(reg), shift);
+            uop_PSRLD_IMM(ir, IREG_MM(reg), IREG_MM(reg), shift_mask);
             break;
         case 0x20: /*PSRAD*/
-            uop_PSRAD_IMM(ir, IREG_MM(reg), IREG_MM(reg), shift);
+            uop_PSRAD_IMM(ir, IREG_MM(reg), IREG_MM(reg), shift_mask);
             break;
         case 0x30: /*PSLLD*/
-            uop_PSLLD_IMM(ir, IREG_MM(reg), IREG_MM(reg), shift);
+            uop_PSLLD_IMM(ir, IREG_MM(reg), IREG_MM(reg), shift_mask);
             break;
         default:
             return 0;
@@ -114,22 +116,23 @@ ropPSxxD_imm(codeblock_t *block, ir_data_t *ir, UNUSED(uint8_t opcode), uint32_t
 uint32_t
 ropPSxxQ_imm(codeblock_t *block, ir_data_t *ir, UNUSED(uint8_t opcode), uint32_t fetchdat, UNUSED(uint32_t op_32), uint32_t op_pc)
 {
-    int reg   = fetchdat & 7;
-    int op    = fetchdat & 0x38;
-    int shift = fastreadb(cs + op_pc + 1);
+    int reg        = fetchdat & 7;
+    int op         = fetchdat & 0x38;
+    int shift_raw  = fastreadb(cs + op_pc + 1);
+    int shift_mask = shift_raw & 0x3f; /* architectural mask for qword elements */
 
     if (codegen_backend_is_apple_arm64()) {
         uop_MMX_ENTER(ir);
         codegen_mark_code_present(block, cs + op_pc, 1);
         switch (op) {
             case 0x10: /*PSRLQ*/
-                uop_PSRLQ_IMM(ir, IREG_MM(reg), IREG_MM(reg), shift);
+                uop_PSRLQ_IMM(ir, IREG_MM(reg), IREG_MM(reg), shift_mask);
                 break;
             case 0x20: /*PSRAQ*/
-                uop_PSRAQ_IMM(ir, IREG_MM(reg), IREG_MM(reg), shift);
+                uop_PSRAQ_IMM(ir, IREG_MM(reg), IREG_MM(reg), shift_mask);
                 break;
             case 0x30: /*PSLLQ*/
-                uop_PSLLQ_IMM(ir, IREG_MM(reg), IREG_MM(reg), shift);
+                uop_PSLLQ_IMM(ir, IREG_MM(reg), IREG_MM(reg), shift_mask);
                 break;
             default:
                 return 0;
@@ -143,13 +146,13 @@ ropPSxxQ_imm(codeblock_t *block, ir_data_t *ir, UNUSED(uint8_t opcode), uint32_t
     codegen_mark_code_present(block, cs + op_pc, 1);
     switch (op) {
         case 0x10: /*PSRLQ*/
-            uop_PSRLQ_IMM(ir, IREG_MM(reg), IREG_MM(reg), shift);
+            uop_PSRLQ_IMM(ir, IREG_MM(reg), IREG_MM(reg), shift_mask);
             break;
         case 0x20: /*PSRAQ*/
-            uop_PSRAQ_IMM(ir, IREG_MM(reg), IREG_MM(reg), shift);
+            uop_PSRAQ_IMM(ir, IREG_MM(reg), IREG_MM(reg), shift_mask);
             break;
         case 0x30: /*PSLLQ*/
-            uop_PSLLQ_IMM(ir, IREG_MM(reg), IREG_MM(reg), shift);
+            uop_PSLLQ_IMM(ir, IREG_MM(reg), IREG_MM(reg), shift_mask);
             break;
         default:
             return 0;

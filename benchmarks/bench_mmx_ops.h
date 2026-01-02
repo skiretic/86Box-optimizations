@@ -736,3 +736,264 @@ bench_mmx_pshufb(uint64_t iters, impl_kind_t impl)
     sink += a[0];
     return (double) (bench_now_ns() - start + sink);
 }
+
+/* Shift-immediate benchmarks to test architectural masking */
+static inline double
+bench_mmx_psrlw(uint64_t iters, impl_kind_t impl)
+{
+    uint16_t a[4] = { 0x8000, 0x4000, 0x2000, 0x1000 };
+    uint64_t sink = 0;
+    int shift = 31; /* > 15 to test masking */
+
+    uint64_t start = bench_now_ns();
+#if defined(__aarch64__)
+    if (impl == IMPL_NEON) {
+        uint16x4_t va = vld1_u16(a);
+        uint16x4_t vshift = vdup_n_u16(shift & 0x0f);
+        for (uint64_t i = 0; i < iters; ++i) {
+            uint16x4_t vc = vshl_u16(va, vneg_s16(vreinterpret_s16_u16(vshift)));
+            vst1_u16(a, vc);
+            va = vc;
+            BENCH_CLOBBER();
+        }
+        sink += a[0];
+        return (double) (bench_now_ns() - start + sink);
+    }
+#endif
+    (void) impl;
+    for (uint64_t i = 0; i < iters; ++i) {
+        for (int j = 0; j < 4; ++j) {
+            a[j] = a[j] >> (shift & 0x0f);
+        }
+        BENCH_CLOBBER();
+    }
+    sink += a[0];
+    return (double) (bench_now_ns() - start + sink);
+}
+
+static inline double
+bench_mmx_psrld(uint64_t iters, impl_kind_t impl)
+{
+    uint32_t a[2] = { 0x80000000, 0x40000000 };
+    uint64_t sink = 0;
+    int shift = 63; /* > 31 to test masking */
+
+    uint64_t start = bench_now_ns();
+#if defined(__aarch64__)
+    if (impl == IMPL_NEON) {
+        uint32x2_t va = vld1_u32(a);
+        uint32x2_t vshift = vdup_n_u32(shift & 0x1f);
+        for (uint64_t i = 0; i < iters; ++i) {
+            uint32x2_t vc = vshl_u32(va, vneg_s32(vreinterpret_s32_u32(vshift)));
+            vst1_u32(a, vc);
+            va = vc;
+            BENCH_CLOBBER();
+        }
+        sink += a[0];
+        return (double) (bench_now_ns() - start + sink);
+    }
+#endif
+    (void) impl;
+    for (uint64_t i = 0; i < iters; ++i) {
+        for (int j = 0; j < 2; ++j) {
+            a[j] = a[j] >> (shift & 0x1f);
+        }
+        BENCH_CLOBBER();
+    }
+    sink += a[0];
+    return (double) (bench_now_ns() - start + sink);
+}
+
+static inline double
+bench_mmx_psrlq(uint64_t iters, impl_kind_t impl)
+{
+    uint64_t a[1] = { 0x8000000000000000ULL };
+    uint64_t sink = 0;
+    int shift = 127; /* > 63 to test masking */
+
+    uint64_t start = bench_now_ns();
+#if defined(__aarch64__)
+    if (impl == IMPL_NEON) {
+        uint64x1_t va = vld1_u64(a);
+        uint64x1_t vshift = vdup_n_u64(shift & 0x3f);
+        for (uint64_t i = 0; i < iters; ++i) {
+            uint64x1_t vc = vshl_u64(va, vneg_s64(vreinterpret_s64_u64(vshift)));
+            vst1_u64(a, vc);
+            va = vc;
+            BENCH_CLOBBER();
+        }
+        sink += a[0];
+        return (double) (bench_now_ns() - start + sink);
+    }
+#endif
+    (void) impl;
+    for (uint64_t i = 0; i < iters; ++i) {
+        a[0] = a[0] >> (shift & 0x3f);
+        BENCH_CLOBBER();
+    }
+    sink += a[0];
+    return (double) (bench_now_ns() - start + sink);
+}
+
+static inline double
+bench_mmx_psraw(uint64_t iters, impl_kind_t impl)
+{
+    int16_t a[4] = { -32768, -16384, 16384, 32767 };
+    uint64_t sink = 0;
+    int shift = 31; /* > 15 to test masking */
+
+    uint64_t start = bench_now_ns();
+#if defined(__aarch64__)
+    if (impl == IMPL_NEON) {
+        int16x4_t va = vld1_s16(a);
+        int16x4_t vshift = vdup_n_s16(shift & 0x0f);
+        for (uint64_t i = 0; i < iters; ++i) {
+            int16x4_t vc = vshl_s16(va, vneg_s16(vshift));
+            vst1_s16(a, vc);
+            va = vc;
+            BENCH_CLOBBER();
+        }
+        sink += a[0];
+        return (double) (bench_now_ns() - start + sink);
+    }
+#endif
+    (void) impl;
+    for (uint64_t i = 0; i < iters; ++i) {
+        for (int j = 0; j < 4; ++j) {
+            a[j] = a[j] >> (shift & 0x0f);
+        }
+        BENCH_CLOBBER();
+    }
+    sink += a[0];
+    return (double) (bench_now_ns() - start + sink);
+}
+
+static inline double
+bench_mmx_psrad(uint64_t iters, impl_kind_t impl)
+{
+    int32_t a[2] = { -2147483648, 2147483647 };
+    uint64_t sink = 0;
+    int shift = 63; /* > 31 to test masking */
+
+    uint64_t start = bench_now_ns();
+#if defined(__aarch64__)
+    if (impl == IMPL_NEON) {
+        int32x2_t va = vld1_s32(a);
+        int32x2_t vshift = vdup_n_s32(shift & 0x1f);
+        for (uint64_t i = 0; i < iters; ++i) {
+            int32x2_t vc = vshl_s32(va, vneg_s32(vshift));
+            vst1_s32(a, vc);
+            va = vc;
+            BENCH_CLOBBER();
+        }
+        sink += a[0];
+        return (double) (bench_now_ns() - start + sink);
+    }
+#endif
+    (void) impl;
+    for (uint64_t i = 0; i < iters; ++i) {
+        for (int j = 0; j < 2; ++j) {
+            a[j] = a[j] >> (shift & 0x1f);
+        }
+        BENCH_CLOBBER();
+    }
+    sink += a[0];
+    return (double) (bench_now_ns() - start + sink);
+}
+
+static inline double
+bench_mmx_psllw(uint64_t iters, impl_kind_t impl)
+{
+    uint16_t a[4] = { 1, 2, 3, 4 };
+    uint64_t sink = 0;
+    int shift = 31; /* > 15 to test masking */
+
+    uint64_t start = bench_now_ns();
+#if defined(__aarch64__)
+    if (impl == IMPL_NEON) {
+        uint16x4_t va = vld1_u16(a);
+        uint16x4_t vshift = vdup_n_u16(shift & 0x0f);
+        for (uint64_t i = 0; i < iters; ++i) {
+            uint16x4_t vc = vshl_u16(va, vreinterpret_s16_u16(vshift));
+            vst1_u16(a, vc);
+            va = vc;
+            BENCH_CLOBBER();
+        }
+        sink += a[0];
+        return (double) (bench_now_ns() - start + sink);
+    }
+#endif
+    (void) impl;
+    for (uint64_t i = 0; i < iters; ++i) {
+        for (int j = 0; j < 4; ++j) {
+            a[j] = a[j] << (shift & 0x0f);
+        }
+        BENCH_CLOBBER();
+    }
+    sink += a[0];
+    return (double) (bench_now_ns() - start + sink);
+}
+
+static inline double
+bench_mmx_pslld(uint64_t iters, impl_kind_t impl)
+{
+    uint32_t a[2] = { 1, 2 };
+    uint64_t sink = 0;
+    int shift = 63; /* > 31 to test masking */
+
+    uint64_t start = bench_now_ns();
+#if defined(__aarch64__)
+    if (impl == IMPL_NEON) {
+        uint32x2_t va = vld1_u32(a);
+        uint32x2_t vshift = vdup_n_u32(shift & 0x1f);
+        for (uint64_t i = 0; i < iters; ++i) {
+            uint32x2_t vc = vshl_u32(va, vreinterpret_s32_u32(vshift));
+            vst1_u32(a, vc);
+            va = vc;
+            BENCH_CLOBBER();
+        }
+        sink += a[0];
+        return (double) (bench_now_ns() - start + sink);
+    }
+#endif
+    (void) impl;
+    for (uint64_t i = 0; i < iters; ++i) {
+        for (int j = 0; j < 2; ++j) {
+            a[j] = a[j] << (shift & 0x1f);
+        }
+        BENCH_CLOBBER();
+    }
+    sink += a[0];
+    return (double) (bench_now_ns() - start + sink);
+}
+
+static inline double
+bench_mmx_psllq(uint64_t iters, impl_kind_t impl)
+{
+    uint64_t a[1] = { 1 };
+    uint64_t sink = 0;
+    int shift = 127; /* > 63 to test masking */
+
+    uint64_t start = bench_now_ns();
+#if defined(__aarch64__)
+    if (impl == IMPL_NEON) {
+        uint64x1_t va = vld1_u64(a);
+        uint64x1_t vshift = vdup_n_u64(shift & 0x3f);
+        for (uint64_t i = 0; i < iters; ++i) {
+            uint64x1_t vc = vshl_u64(va, vreinterpret_s64_u64(vshift));
+            vst1_u64(a, vc);
+            va = vc;
+            BENCH_CLOBBER();
+        }
+        sink += a[0];
+        return (double) (bench_now_ns() - start + sink);
+    }
+#endif
+    (void) impl;
+    for (uint64_t i = 0; i < iters; ++i) {
+        a[0] = a[0] << (shift & 0x3f);
+        BENCH_CLOBBER();
+    }
+    sink += a[0];
+    return (double) (bench_now_ns() - start + sink);
+}

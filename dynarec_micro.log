@@ -1,0 +1,78 @@
+impl=neon iters=30000000
+  DYN_PADDB: 0.635 ns/iter
+  DYN_PSUBB: 0.649 ns/iter
+  DYN_PADDUSB: 0.954 ns/iter
+  DYN_PADDSW: 0.969 ns/iter
+  DYN_PMULLW: 0.963 ns/iter
+  DYN_PMULH: 1.908 ns/iter
+  DYN_PADDW: 0.633 ns/iter
+  DYN_PADDD: 2.640 ns/iter
+  DYN_PADDSB: 0.956 ns/iter
+  DYN_PADDUSW: 0.956 ns/iter
+  DYN_PSUBW: 0.631 ns/iter
+  DYN_PSUBD: 133.799 ns/iter
+  DYN_PSUBSB: 0.949 ns/iter
+  DYN_PSUBSW: 0.946 ns/iter
+  DYN_PSUBUSB: 0.950 ns/iter
+  DYN_PSUBUSW: 0.945 ns/iter
+  DYN_PMADDWD: 1.584 ns/iter
+  DYN_PSRLW: 0.628 ns/iter
+  DYN_PSRLD: 0.633 ns/iter
+  DYN_PSRLQ: 0.633 ns/iter
+  DYN_PSRAW: 0.628 ns/iter
+  DYN_PSRAD: 0.633 ns/iter
+  DYN_PSLLW: 0.640 ns/iter
+  DYN_PSLLD: 0.641 ns/iter
+  DYN_PSLLQ: 0.630 ns/iter
+impl=scalar iters=30000000
+  DYN_PADDB: 0.631 ns/iter
+  DYN_PSUBB: 0.314 ns/iter
+  DYN_PADDUSB: 0.329 ns/iter
+  DYN_PADDSW: 0.324 ns/iter
+  DYN_PMULLW: 1.266 ns/iter
+  DYN_PMULH: 0.957 ns/iter
+  DYN_PADDW: 0.629 ns/iter
+  DYN_PADDD: 2.313 ns/iter
+  DYN_PADDSB: 1.910 ns/iter
+  DYN_PADDUSW: 1.261 ns/iter
+  DYN_PSUBW: 0.635 ns/iter
+  DYN_PSUBD: 133.488 ns/iter
+  DYN_PSUBSB: 1.907 ns/iter
+  DYN_PSUBSW: 1.917 ns/iter
+  DYN_PSUBUSB: 1.582 ns/iter
+  DYN_PSUBUSW: 1.265 ns/iter
+  DYN_PMADDWD: 4.153 ns/iter
+  DYN_PSRLW: 0.315 ns/iter
+  DYN_PSRLD: 0.312 ns/iter
+  DYN_PSRLQ: 0.321 ns/iter
+  DYN_PSRAW: 0.321 ns/iter
+  DYN_PSRAD: 0.314 ns/iter
+  DYN_PSLLW: 0.318 ns/iter
+  DYN_PSLLD: 0.312 ns/iter
+  DYN_PSLLQ: 0.321 ns/iter
+comparison (primary/baseline)
+  DYN_PADDB: 1.01
+  DYN_PSUBB: 2.07
+  DYN_PADDUSB: 2.90
+  DYN_PADDSW: 2.99
+  DYN_PMULLW: 0.76
+  DYN_PMULH: 1.99
+  DYN_PADDW: 1.01
+  DYN_PADDD: 1.14
+  DYN_PADDSB: 0.50
+  DYN_PADDUSW: 0.76
+  DYN_PSUBW: 0.99
+  DYN_PSUBD: 1.00
+  DYN_PSUBSB: 0.50
+  DYN_PSUBSW: 0.49
+  DYN_PSUBUSB: 0.60
+  DYN_PSUBUSW: 0.75
+  DYN_PMADDWD: 0.38
+  DYN_PSRLW: 1.99
+  DYN_PSRLD: 2.03
+  DYN_PSRLQ: 1.97
+  DYN_PSRAW: 1.96
+  DYN_PSRAD: 2.01
+  DYN_PSLLW: 2.01
+  DYN_PSLLD: 2.06
+  DYN_PSLLQ: 1.96

@@ -15,7 +15,15 @@ static const bench_op_t bench_ops[] = {
     { "PMULH",    bench_mmx_pmulh    },
     { "PACKSSWB", bench_mmx_packsswb },
     { "PACKUSWB", bench_mmx_packuswb },
-    { "PSHUFB",   bench_mmx_pshufb   }
+    { "PSHUFB",   bench_mmx_pshufb   },
+    { "PSRLW",    bench_mmx_psrlw    },
+    { "PSRLD",    bench_mmx_psrld    },
+    { "PSRLQ",    bench_mmx_psrlq    },
+    { "PSRAW",    bench_mmx_psraw    },
+    { "PSRAD",    bench_mmx_psrad    },
+    { "PSLLW",    bench_mmx_psllw    },
+    { "PSLLD",    bench_mmx_pslld    },
+    { "PSLLQ",    bench_mmx_psllq    }
 };
 #define BENCH_OP_COUNT (sizeof(bench_ops) / sizeof(bench_ops[0]))
 
@@ -28,7 +36,15 @@ static const char *const bench_names[] = {
     "PMULH",
     "PACKSSWB",
     "PACKUSWB",
-    "PSHUFB"
+    "PSHUFB",
+    "PSRLW",
+    "PSRLD",
+    "PSRLQ",
+    "PSRAW",
+    "PSRAD",
+    "PSLLW",
+    "PSLLD",
+    "PSLLQ"
 };
 
 typedef struct bench_result {

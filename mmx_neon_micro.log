@@ -1,0 +1,56 @@
+impl=neon iters=30000000
+  PADDB   : 0.640 ns/iter
+  PSUBB   : 0.639 ns/iter
+  PADDUSB : 0.952 ns/iter
+  PADDSW  : 0.955 ns/iter
+  PMULLW  : 0.948 ns/iter
+  PMULH   : 1.913 ns/iter
+  PACKSSWB: 1.590 ns/iter
+  PACKUSWB: 1.606 ns/iter
+  PSHUFB  : 0.632 ns/iter
+  PSRLW   : 0.636 ns/iter
+  PSRLD   : 0.648 ns/iter
+  PSRLQ   : 0.644 ns/iter
+  PSRAW   : 0.635 ns/iter
+  PSRAD   : 0.628 ns/iter
+  PSLLW   : 0.631 ns/iter
+  PSLLD   : 0.635 ns/iter
+  PSLLQ   : 0.637 ns/iter
+impl=scalar iters=30000000
+  PADDB   : 0.637 ns/iter
+  PSUBB   : 0.315 ns/iter
+  PADDUSB : 0.314 ns/iter
+  PADDSW  : 0.322 ns/iter
+  PMULLW  : 1.293 ns/iter
+  PMULH   : 0.967 ns/iter
+  PACKSSWB: 5.878 ns/iter
+  PACKUSWB: 9.584 ns/iter
+  PSHUFB  : 0.311 ns/iter
+  PSRLW   : 0.317 ns/iter
+  PSRLD   : 0.317 ns/iter
+  PSRLQ   : 0.312 ns/iter
+  PSRAW   : 0.320 ns/iter
+  PSRAD   : 0.312 ns/iter
+  PSLLW   : 0.327 ns/iter
+  PSLLD   : 0.336 ns/iter
+  PSLLQ   : 0.317 ns/iter
+comparison (primary/baseline)
+  PADDB   : 1.00
+  PSUBB   : 2.02
+  PADDUSB : 3.03
+  PADDSW  : 2.96
+  PMULLW  : 0.73
+  PMULH   : 1.98
+  PACKSSWB: 0.27
+  PACKUSWB: 0.17
+  PSHUFB  : 2.03
+  PSRLW   : 2.00
+  PSRLD   : 2.04
+  PSRLQ   : 2.06
+  PSRAW   : 1.98
+  PSRAD   : 2.01
+  PSLLW   : 1.93
+  PSLLD   : 1.89
+  PSLLQ   : 2.01
+
+Cache Metrics: Not available (microbenchmarks don't run dynarec code)

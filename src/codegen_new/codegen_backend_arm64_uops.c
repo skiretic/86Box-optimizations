@@ -1449,9 +1449,17 @@ codegen_PACKSSWB(codeblock_t *block, uop_t *uop)
     int src_size_b = IREG_GET_SIZE(uop->src_reg_b_real);
 
     if (REG_IS_Q(dest_size) && REG_IS_Q(src_size_b) && uop->dest_reg_a_real == uop->src_reg_a_real) {
-        host_arm64_INS_D(block, REG_V_TEMP, dest_reg, 0, 0);
-        host_arm64_INS_D(block, REG_V_TEMP, src_reg_b, 1, 0);
-        host_arm64_SQXTN_V8B_8H(block, dest_reg, REG_V_TEMP);
+#if defined(__APPLE__) && defined(__aarch64__) && defined(NEW_DYNAREC_BACKEND)
+        if (codegen_backend_is_apple_arm64()) {
+            host_arm64_INS_D(block, REG_V_TEMP, dest_reg, 0, 0);
+            host_arm64_INS_D(block, REG_V_TEMP, src_reg_b, 1, 0);
+            host_arm64_SQXTN_V8B_8H(block, dest_reg, REG_V_TEMP);
+        } else {
+            fatal("PACKSSWB not supported on generic ARM64\n");
+        }
+#else
+        fatal("PACKSSWB not supported on this platform\n");
+#endif
     } else
         fatal("PACKSSWB %02x %02x %02x\n", uop->dest_reg_a_real, uop->src_reg_a_real, uop->src_reg_b_real);
 
@@ -1466,9 +1474,17 @@ codegen_PACKSSDW(codeblock_t *block, uop_t *uop)
     int src_size_b = IREG_GET_SIZE(uop->src_reg_b_real);
 
     if (REG_IS_Q(dest_size) && REG_IS_Q(src_size_b) && uop->dest_reg_a_real == uop->src_reg_a_real) {
-        host_arm64_INS_D(block, REG_V_TEMP, dest_reg, 0, 0);
-        host_arm64_INS_D(block, REG_V_TEMP, src_reg_b, 1, 0);
-        host_arm64_SQXTN_V4H_4S(block, dest_reg, REG_V_TEMP);
+#if defined(__APPLE__) && defined(__aarch64__) && defined(NEW_DYNAREC_BACKEND)
+        if (codegen_backend_is_apple_arm64()) {
+            host_arm64_INS_D(block, REG_V_TEMP, dest_reg, 0, 0);
+            host_arm64_INS_D(block, REG_V_TEMP, src_reg_b, 1, 0);
+            host_arm64_SQXTN_V4H_4S(block, dest_reg, REG_V_TEMP);
+        } else {
+            fatal("PACKSSDW not supported on generic ARM64\n");
+        }
+#else
+        fatal("PACKSSDW not supported on this platform\n");
+#endif
     } else
         fatal("PACKSSDW %02x %02x %02x\n", uop->dest_reg_a_real, uop->src_reg_a_real, uop->src_reg_b_real);
 
@@ -1481,9 +1497,17 @@ codegen_PACKUSWB(codeblock_t *block, uop_t *uop)
     int dest_size = IREG_GET_SIZE(uop->dest_reg_a_real), src_size_b = IREG_GET_SIZE(uop->src_reg_b_real);
 
     if (REG_IS_Q(dest_size) && REG_IS_Q(src_size_b) && uop->dest_reg_a_real == uop->src_reg_a_real) {
-        host_arm64_INS_D(block, REG_V_TEMP, dest_reg, 0, 0);
-        host_arm64_INS_D(block, REG_V_TEMP, src_reg_b, 1, 0);
-        host_arm64_SQXTUN_V8B_8H(block, dest_reg, REG_V_TEMP);
+#if defined(__APPLE__) && defined(__aarch64__) && defined(NEW_DYNAREC_BACKEND)
+        if (codegen_backend_is_apple_arm64()) {
+            host_arm64_INS_D(block, REG_V_TEMP, dest_reg, 0, 0);
+            host_arm64_INS_D(block, REG_V_TEMP, src_reg_b, 1, 0);
+            host_arm64_SQXTUN_V8B_8H(block, dest_reg, REG_V_TEMP);
+        } else {
+            fatal("PACKUSWB not supported on generic ARM64\n");
+        }
+#else
+        fatal("PACKUSWB not supported on this platform\n");
+#endif
     } else
         fatal("PACKUSWB %02x %02x %02x\n", uop->dest_reg_a_real, uop->src_reg_a_real, uop->src_reg_b_real);
 
@@ -1501,15 +1525,23 @@ codegen_PSHUFB(codeblock_t *block, uop_t *uop)
     int src_size_b = IREG_GET_SIZE(uop->src_reg_b_real);
 
     if (REG_IS_Q(dest_size) && REG_IS_Q(src_size_a) && REG_IS_Q(src_size_b)) {
-        // PSHUFB: shuffle bytes from src_a using indices from src_b
-        // If index & 0x80, result = 0, else result = src_a[index & 7]
-        host_arm64_AND_IMM(block, REG_V_TEMP, src_reg_b, 7);         // mask indices to 0-7
-        host_arm64_TBX1_V8B(block, dest_reg, src_reg_a, REG_V_TEMP); // dest = lookup
-        // Now handle high bit: if set, set to 0
-        host_arm64_AND_IMM(block, REG_V_TEMP2, src_reg_b, 0x80);     // REG_V_TEMP2 = mask where high bit set
-        host_arm64_NOT_V8B(block, REG_V_TEMP, REG_V_TEMP2);          // REG_V_TEMP = ~mask
-        host_arm64_BSL_V8B(block, REG_V_TEMP, dest_reg, REG_V_TEMP); // REG_V_TEMP = dest & ~mask
-        host_arm64_INS_D(block, dest_reg, REG_V_TEMP, 0, 0);
+#if defined(__APPLE__) && defined(__aarch64__) && defined(NEW_DYNAREC_BACKEND)
+        if (codegen_backend_is_apple_arm64()) {
+            // PSHUFB: shuffle bytes from src_a using indices from src_b
+            // If index & 0x80, result = 0, else result = src_a[index & 7]
+            host_arm64_AND_IMM(block, REG_V_TEMP, src_reg_b, 7);         // mask indices to 0-7
+            host_arm64_TBX1_V8B(block, dest_reg, src_reg_a, REG_V_TEMP); // dest = lookup
+            // Now handle high bit: if set, set to 0
+            host_arm64_AND_IMM(block, REG_V_TEMP2, src_reg_b, 0x80);     // REG_V_TEMP2 = mask where high bit set
+            host_arm64_NOT_V8B(block, REG_V_TEMP, REG_V_TEMP2);          // REG_V_TEMP = ~mask
+            host_arm64_BSL_V8B(block, REG_V_TEMP, dest_reg, REG_V_TEMP); // REG_V_TEMP = dest & ~mask
+            host_arm64_INS_D(block, dest_reg, REG_V_TEMP, 0, 0);
+        } else {
+            fatal("PSHUFB not supported on generic ARM64\n");
+        }
+#else
+        fatal("PSHUFB not supported on this platform\n");
+#endif
     } else
         fatal("PSHUFB %02x %02x %02x\n", uop->dest_reg_a_real, uop->src_reg_a_real, uop->src_reg_b_real);
 
@@ -1527,13 +1559,16 @@ codegen_PADDB(codeblock_t *block, uop_t *uop)
     int src_size_b = IREG_GET_SIZE(uop->src_reg_b_real);
 
     if (REG_IS_Q(dest_size) && REG_IS_Q(src_size_a) && REG_IS_Q(src_size_b)) {
+#if defined(__APPLE__) && defined(__aarch64__) && defined(NEW_DYNAREC_BACKEND)
         if (codegen_backend_is_apple_arm64()) {
             host_arm64_ADD_V8B(block, dest_reg, src_reg_a, src_reg_b);
             return 0;
+        } else {
+            fatal("PADDB not supported on generic ARM64\n");
         }
-
-        host_arm64_ADD_V8B(block, dest_reg, src_reg_a, src_reg_b);
-        return 0;
+#else
+        fatal("PADDB not supported on this platform\n");
+#endif
     }
 
     fatal("PADDB %02x %02x %02x\n", uop->dest_reg_a_real, uop->src_reg_a_real, uop->src_reg_b_real);
@@ -1551,13 +1586,16 @@ codegen_PADDW(codeblock_t *block, uop_t *uop)
     int src_size_b = IREG_GET_SIZE(uop->src_reg_b_real);
 
     if (REG_IS_Q(dest_size) && REG_IS_Q(src_size_a) && REG_IS_Q(src_size_b)) {
+#if defined(__APPLE__) && defined(__aarch64__) && defined(NEW_DYNAREC_BACKEND)
         if (codegen_backend_is_apple_arm64()) {
             host_arm64_ADD_V4H(block, dest_reg, src_reg_a, src_reg_b);
             return 0;
+        } else {
+            fatal("PADDW not supported on generic ARM64\n");
         }
-
-        host_arm64_ADD_V4H(block, dest_reg, src_reg_a, src_reg_b);
-        return 0;
+#else
+        fatal("PADDW not supported on this platform\n");
+#endif
     }
 
     fatal("PADDW %02x %02x %02x\n", uop->dest_reg_a_real, uop->src_reg_a_real, uop->src_reg_b_real);
@@ -1575,13 +1613,16 @@ codegen_PADDD(codeblock_t *block, uop_t *uop)
     int src_size_b = IREG_GET_SIZE(uop->src_reg_b_real);
 
     if (REG_IS_Q(dest_size) && REG_IS_Q(src_size_a) && REG_IS_Q(src_size_b)) {
+#if defined(__APPLE__) && defined(__aarch64__) && defined(NEW_DYNAREC_BACKEND)
         if (codegen_backend_is_apple_arm64()) {
             host_arm64_ADD_V2S(block, dest_reg, src_reg_a, src_reg_b);
             return 0;
+        } else {
+            fatal("PADDD not supported on generic ARM64\n");
         }
-
-        host_arm64_ADD_V2S(block, dest_reg, src_reg_a, src_reg_b);
-        return 0;
+#else
+        fatal("PADDD not supported on this platform\n");
+#endif
     }
 
     fatal("PADDD %02x %02x %02x\n", uop->dest_reg_a_real, uop->src_reg_a_real, uop->src_reg_b_real);
@@ -1599,13 +1640,16 @@ codegen_PADDSB(codeblock_t *block, uop_t *uop)
     int src_size_b = IREG_GET_SIZE(uop->src_reg_b_real);
 
     if (REG_IS_Q(dest_size) && REG_IS_Q(src_size_a) && REG_IS_Q(src_size_b)) {
+#if defined(__APPLE__) && defined(__aarch64__) && defined(NEW_DYNAREC_BACKEND)
         if (codegen_backend_is_apple_arm64()) {
             host_arm64_SQADD_V8B(block, dest_reg, src_reg_a, src_reg_b);
             return 0;
+        } else {
+            fatal("PADDSB not supported on generic ARM64\n");
         }
-
-        host_arm64_SQADD_V8B(block, dest_reg, src_reg_a, src_reg_b);
-        return 0;
+#else
+        fatal("PADDSB not supported on this platform\n");
+#endif
     }
 
     fatal("PADDSB %02x %02x %02x\n", uop->dest_reg_a_real, uop->src_reg_a_real, uop->src_reg_b_real);
@@ -1623,13 +1667,16 @@ codegen_PADDSW(codeblock_t *block, uop_t *uop)
     int src_size_b = IREG_GET_SIZE(uop->src_reg_b_real);
 
     if (REG_IS_Q(dest_size) && REG_IS_Q(src_size_a) && REG_IS_Q(src_size_b)) {
+#if defined(__APPLE__) && defined(__aarch64__) && defined(NEW_DYNAREC_BACKEND)
         if (codegen_backend_is_apple_arm64()) {
             host_arm64_SQADD_V4H(block, dest_reg, src_reg_a, src_reg_b);
             return 0;
+        } else {
+            fatal("PADDSW not supported on generic ARM64\n");
         }
-
-        host_arm64_SQADD_V4H(block, dest_reg, src_reg_a, src_reg_b);
-        return 0;
+#else
+        fatal("PADDSW not supported on this platform\n");
+#endif
     }
 
     fatal("PADDSW %02x %02x %02x\n", uop->dest_reg_a_real, uop->src_reg_a_real, uop->src_reg_b_real);
@@ -1647,13 +1694,16 @@ codegen_PADDUSB(codeblock_t *block, uop_t *uop)
     int src_size_b = IREG_GET_SIZE(uop->src_reg_b_real);
 
     if (REG_IS_Q(dest_size) && REG_IS_Q(src_size_a) && REG_IS_Q(src_size_b)) {
+#if defined(__APPLE__) && defined(__aarch64__) && defined(NEW_DYNAREC_BACKEND)
         if (codegen_backend_is_apple_arm64()) {
             host_arm64_UQADD_V8B(block, dest_reg, src_reg_a, src_reg_b);
             return 0;
+        } else {
+            fatal("PADDUSB not supported on generic ARM64\n");
         }
-
-        host_arm64_UQADD_V8B(block, dest_reg, src_reg_a, src_reg_b);
-        return 0;
+#else
+        fatal("PADDUSB not supported on this platform\n");
+#endif
     }
 
     fatal("PADDUSB %02x %02x %02x\n", uop->dest_reg_a_real, uop->src_reg_a_real, uop->src_reg_b_real);
@@ -1671,13 +1721,16 @@ codegen_PADDUSW(codeblock_t *block, uop_t *uop)
     int src_size_b = IREG_GET_SIZE(uop->src_reg_b_real);
 
     if (REG_IS_Q(dest_size) && REG_IS_Q(src_size_a) && REG_IS_Q(src_size_b)) {
+#if defined(__APPLE__) && defined(__aarch64__) && defined(NEW_DYNAREC_BACKEND)
         if (codegen_backend_is_apple_arm64()) {
             host_arm64_UQADD_V4H(block, dest_reg, src_reg_a, src_reg_b);
             return 0;
+        } else {
+            fatal("PADDUSW not supported on generic ARM64\n");
         }
-
-        host_arm64_UQADD_V4H(block, dest_reg, src_reg_a, src_reg_b);
-        return 0;
+#else
+        fatal("PADDUSW not supported on this platform\n");
+#endif
     }
 
     fatal("PADDUSW %02x %02x %02x\n", uop->dest_reg_a_real, uop->src_reg_a_real, uop->src_reg_b_real);
@@ -1696,7 +1749,15 @@ codegen_PCMPEQB(codeblock_t *block, uop_t *uop)
     int src_size_b = IREG_GET_SIZE(uop->src_reg_b_real);
 
     if (REG_IS_Q(dest_size) && REG_IS_Q(src_size_a) && REG_IS_Q(src_size_b)) {
-        host_arm64_CMEQ_V8B(block, dest_reg, src_reg_a, src_reg_b);
+#if defined(__APPLE__) && defined(__aarch64__) && defined(NEW_DYNAREC_BACKEND)
+        if (codegen_backend_is_apple_arm64()) {
+            host_arm64_CMEQ_V8B(block, dest_reg, src_reg_a, src_reg_b);
+        } else {
+            fatal("PCMPEQB not supported on generic ARM64\n");
+        }
+#else
+        fatal("PCMPEQB not supported on this platform\n");
+#endif
     } else
         fatal("PCMPEQB %02x %02x %02x\n", uop->dest_reg_a_real, uop->src_reg_a_real, uop->src_reg_b_real);
 
@@ -1713,7 +1774,15 @@ codegen_PCMPEQW(codeblock_t *block, uop_t *uop)
     int src_size_b = IREG_GET_SIZE(uop->src_reg_b_real);
 
     if (REG_IS_Q(dest_size) && REG_IS_Q(src_size_a) && REG_IS_Q(src_size_b)) {
-        host_arm64_CMEQ_V4H(block, dest_reg, src_reg_a, src_reg_b);
+#if defined(__APPLE__) && defined(__aarch64__) && defined(NEW_DYNAREC_BACKEND)
+        if (codegen_backend_is_apple_arm64()) {
+            host_arm64_CMEQ_V4H(block, dest_reg, src_reg_a, src_reg_b);
+        } else {
+            fatal("PCMPEQW not supported on generic ARM64\n");
+        }
+#else
+        fatal("PCMPEQW not supported on this platform\n");
+#endif
     } else
         fatal("PCMPEQW %02x %02x %02x\n", uop->dest_reg_a_real, uop->src_reg_a_real, uop->src_reg_b_real);
 
@@ -1730,7 +1799,15 @@ codegen_PCMPEQD(codeblock_t *block, uop_t *uop)
     int src_size_b = IREG_GET_SIZE(uop->src_reg_b_real);
 
     if (REG_IS_Q(dest_size) && REG_IS_Q(src_size_a) && REG_IS_Q(src_size_b)) {
-        host_arm64_CMEQ_V2S(block, dest_reg, src_reg_a, src_reg_b);
+#if defined(__APPLE__) && defined(__aarch64__) && defined(NEW_DYNAREC_BACKEND)
+        if (codegen_backend_is_apple_arm64()) {
+            host_arm64_CMEQ_V2S(block, dest_reg, src_reg_a, src_reg_b);
+        } else {
+            fatal("PCMPEQD not supported on generic ARM64\n");
+        }
+#else
+        fatal("PCMPEQD not supported on this platform\n");
+#endif
     } else
         fatal("PCMPEQD %02x %02x %02x\n", uop->dest_reg_a_real, uop->src_reg_a_real, uop->src_reg_b_real);
 
@@ -1747,7 +1824,15 @@ codegen_PCMPGTB(codeblock_t *block, uop_t *uop)
     int src_size_b = IREG_GET_SIZE(uop->src_reg_b_real);
 
     if (REG_IS_Q(dest_size) && REG_IS_Q(src_size_a) && REG_IS_Q(src_size_b)) {
-        host_arm64_CMGT_V8B(block, dest_reg, src_reg_a, src_reg_b);
+#if defined(__APPLE__) && defined(__aarch64__) && defined(NEW_DYNAREC_BACKEND)
+        if (codegen_backend_is_apple_arm64()) {
+            host_arm64_CMGT_V8B(block, dest_reg, src_reg_a, src_reg_b);
+        } else {
+            fatal("PCMPGTB not supported on generic ARM64\n");
+        }
+#else
+        fatal("PCMPGTB not supported on this platform\n");
+#endif
     } else
         fatal("PCMPGTB %02x %02x %02x\n", uop->dest_reg_a_real, uop->src_reg_a_real, uop->src_reg_b_real);
 
@@ -1764,7 +1849,15 @@ codegen_PCMPGTW(codeblock_t *block, uop_t *uop)
     int src_size_b = IREG_GET_SIZE(uop->src_reg_b_real);
 
     if (REG_IS_Q(dest_size) && REG_IS_Q(src_size_a) && REG_IS_Q(src_size_b)) {
-        host_arm64_CMGT_V4H(block, dest_reg, src_reg_a, src_reg_b);
+#if defined(__APPLE__) && defined(__aarch64__) && defined(NEW_DYNAREC_BACKEND)
+        if (codegen_backend_is_apple_arm64()) {
+            host_arm64_CMGT_V4H(block, dest_reg, src_reg_a, src_reg_b);
+        } else {
+            fatal("PCMPGTW not supported on generic ARM64\n");
+        }
+#else
+        fatal("PCMPGTW not supported on this platform\n");
+#endif
     } else
         fatal("PCMPGTW %02x %02x %02x\n", uop->dest_reg_a_real, uop->src_reg_a_real, uop->src_reg_b_real);
 
@@ -1781,7 +1874,15 @@ codegen_PCMPGTD(codeblock_t *block, uop_t *uop)
     int src_size_b = IREG_GET_SIZE(uop->src_reg_b_real);
 
     if (REG_IS_Q(dest_size) && REG_IS_Q(src_size_a) && REG_IS_Q(src_size_b)) {
-        host_arm64_CMGT_V2S(block, dest_reg, src_reg_a, src_reg_b);
+#if defined(__APPLE__) && defined(__aarch64__) && defined(NEW_DYNAREC_BACKEND)
+        if (codegen_backend_is_apple_arm64()) {
+            host_arm64_CMGT_V2S(block, dest_reg, src_reg_a, src_reg_b);
+        } else {
+            fatal("PCMPGTD not supported on generic ARM64\n");
+        }
+#else
+        fatal("PCMPGTD not supported on this platform\n");
+#endif
     } else
         fatal("PCMPGTD %02x %02x %02x\n", uop->dest_reg_a_real, uop->src_reg_a_real, uop->src_reg_b_real);
 
@@ -2078,12 +2179,20 @@ codegen_PSLLW_IMM(codeblock_t *block, uop_t *uop)
     int src_size  = IREG_GET_SIZE(uop->src_reg_a_real);
 
     if (REG_IS_Q(dest_size) && REG_IS_Q(src_size)) {
-        if (uop->imm_data == 0)
-            host_arm64_FMOV_D_D(block, dest_reg, src_reg);
-        else if (uop->imm_data > 15)
-            host_arm64_EOR_REG_V(block, dest_reg, dest_reg, dest_reg);
-        else
-            host_arm64_SHL_V4H(block, dest_reg, src_reg, uop->imm_data);
+#if defined(__APPLE__) && defined(__aarch64__) && defined(NEW_DYNAREC_BACKEND)
+        if (codegen_backend_is_apple_arm64()) {
+            if (uop->imm_data == 0)
+                host_arm64_FMOV_D_D(block, dest_reg, src_reg);
+            else if (uop->imm_data > 15)
+                host_arm64_EOR_REG_V(block, dest_reg, dest_reg, dest_reg);
+            else
+                host_arm64_SHL_V4H(block, dest_reg, src_reg, uop->imm_data);
+        } else {
+            fatal("PSLLW_IMM not supported on generic ARM64\n");
+        }
+#else
+        fatal("PSLLW_IMM not supported on this platform\n");
+#endif
     } else
         fatal("PSLLW_IMM %02x %02x\n", uop->dest_reg_a_real, uop->src_reg_a_real);
 
@@ -2098,12 +2207,20 @@ codegen_PSLLD_IMM(codeblock_t *block, uop_t *uop)
     int src_size  = IREG_GET_SIZE(uop->src_reg_a_real);
 
     if (REG_IS_Q(dest_size) && REG_IS_Q(src_size)) {
-        if (uop->imm_data == 0)
-            host_arm64_FMOV_D_D(block, dest_reg, src_reg);
-        else if (uop->imm_data > 31)
-            host_arm64_EOR_REG_V(block, dest_reg, dest_reg, dest_reg);
-        else
-            host_arm64_SHL_V2S(block, dest_reg, src_reg, uop->imm_data);
+#if defined(__APPLE__) && defined(__aarch64__) && defined(NEW_DYNAREC_BACKEND)
+        if (codegen_backend_is_apple_arm64()) {
+            if (uop->imm_data == 0)
+                host_arm64_FMOV_D_D(block, dest_reg, src_reg);
+            else if (uop->imm_data > 31)
+                host_arm64_EOR_REG_V(block, dest_reg, dest_reg, dest_reg);
+            else
+                host_arm64_SHL_V2S(block, dest_reg, src_reg, uop->imm_data);
+        } else {
+            fatal("PSLLD_IMM not supported on generic ARM64\n");
+        }
+#else
+        fatal("PSLLD_IMM not supported on this platform\n");
+#endif
     } else
         fatal("PSLLD_IMM %02x %02x\n", uop->dest_reg_a_real, uop->src_reg_a_real);
 
@@ -2118,12 +2235,20 @@ codegen_PSLLQ_IMM(codeblock_t *block, uop_t *uop)
     int src_size  = IREG_GET_SIZE(uop->src_reg_a_real);
 
     if (REG_IS_Q(dest_size) && REG_IS_Q(src_size)) {
-        if (uop->imm_data == 0)
-            host_arm64_FMOV_D_D(block, dest_reg, src_reg);
-        else if (uop->imm_data > 63)
-            host_arm64_EOR_REG_V(block, dest_reg, dest_reg, dest_reg);
-        else
-            host_arm64_SHL_V2D(block, dest_reg, src_reg, uop->imm_data);
+#if defined(__APPLE__) && defined(__aarch64__) && defined(NEW_DYNAREC_BACKEND)
+        if (codegen_backend_is_apple_arm64()) {
+            if (uop->imm_data == 0)
+                host_arm64_FMOV_D_D(block, dest_reg, src_reg);
+            else if (uop->imm_data > 63)
+                host_arm64_EOR_REG_V(block, dest_reg, dest_reg, dest_reg);
+            else
+                host_arm64_SHL_V2D(block, dest_reg, src_reg, uop->imm_data);
+        } else {
+            fatal("PSLLQ_IMM not supported on generic ARM64\n");
+        }
+#else
+        fatal("PSLLQ_IMM not supported on this platform\n");
+#endif
     } else
         fatal("PSLLQ_IMM %02x %02x\n", uop->dest_reg_a_real, uop->src_reg_a_real);
 
@@ -2261,13 +2386,16 @@ codegen_PSUBB(codeblock_t *block, uop_t *uop)
     int src_size_b = IREG_GET_SIZE(uop->src_reg_b_real);
 
     if (REG_IS_Q(dest_size) && REG_IS_Q(src_size_a) && REG_IS_Q(src_size_b)) {
+#if defined(__APPLE__) && defined(__aarch64__) && defined(NEW_DYNAREC_BACKEND)
         if (codegen_backend_is_apple_arm64()) {
             host_arm64_SUB_V8B(block, dest_reg, src_reg_a, src_reg_b);
             return 0;
+        } else {
+            fatal("PSUBB not supported on generic ARM64\n");
         }
-
-        host_arm64_SUB_V8B(block, dest_reg, src_reg_a, src_reg_b);
-        return 0;
+#else
+        fatal("PSUBB not supported on this platform\n");
+#endif
     }
 
     fatal("PSUBB %02x %02x %02x\n", uop->dest_reg_a_real, uop->src_reg_a_real, uop->src_reg_b_real);
@@ -2285,13 +2413,16 @@ codegen_PSUBW(codeblock_t *block, uop_t *uop)
     int src_size_b = IREG_GET_SIZE(uop->src_reg_b_real);
 
     if (REG_IS_Q(dest_size) && REG_IS_Q(src_size_a) && REG_IS_Q(src_size_b)) {
+#if defined(__APPLE__) && defined(__aarch64__) && defined(NEW_DYNAREC_BACKEND)
         if (codegen_backend_is_apple_arm64()) {
             host_arm64_SUB_V4H(block, dest_reg, src_reg_a, src_reg_b);
             return 0;
+        } else {
+            fatal("PSUBW not supported on generic ARM64\n");
         }
-
-        host_arm64_SUB_V4H(block, dest_reg, src_reg_a, src_reg_b);
-        return 0;
+#else
+        fatal("PSUBW not supported on this platform\n");
+#endif
     }
 
     fatal("PSUBW %02x %02x %02x\n", uop->dest_reg_a_real, uop->src_reg_a_real, uop->src_reg_b_real);
@@ -2309,13 +2440,16 @@ codegen_PSUBD(codeblock_t *block, uop_t *uop)
     int src_size_b = IREG_GET_SIZE(uop->src_reg_b_real);
 
     if (REG_IS_Q(dest_size) && REG_IS_Q(src_size_a) && REG_IS_Q(src_size_b)) {
+#if defined(__APPLE__) && defined(__aarch64__) && defined(NEW_DYNAREC_BACKEND)
         if (codegen_backend_is_apple_arm64()) {
             host_arm64_SUB_V2S(block, dest_reg, src_reg_a, src_reg_b);
             return 0;
+        } else {
+            fatal("PSUBD not supported on generic ARM64\n");
         }
-
-        host_arm64_SUB_V2S(block, dest_reg, src_reg_a, src_reg_b);
-        return 0;
+#else
+        fatal("PSUBD not supported on this platform\n");
+#endif
     }
 
     fatal("PSUBD %02x %02x %02x\n", uop->dest_reg_a_real, uop->src_reg_a_real, uop->src_reg_b_real);
@@ -2333,13 +2467,16 @@ codegen_PSUBSB(codeblock_t *block, uop_t *uop)
     int src_size_b = IREG_GET_SIZE(uop->src_reg_b_real);
 
     if (REG_IS_Q(dest_size) && REG_IS_Q(src_size_a) && REG_IS_Q(src_size_b)) {
+#if defined(__APPLE__) && defined(__aarch64__) && defined(NEW_DYNAREC_BACKEND)
         if (codegen_backend_is_apple_arm64()) {
             host_arm64_SQSUB_V8B(block, dest_reg, src_reg_a, src_reg_b);
             return 0;
+        } else {
+            fatal("PSUBSB not supported on generic ARM64\n");
         }
-
-        host_arm64_SQSUB_V8B(block, dest_reg, src_reg_a, src_reg_b);
-        return 0;
+#else
+        fatal("PSUBSB not supported on this platform\n");
+#endif
     }
 
     fatal("PSUBSB %02x %02x %02x\n", uop->dest_reg_a_real, uop->src_reg_a_real, uop->src_reg_b_real);
@@ -2357,13 +2494,16 @@ codegen_PSUBSW(codeblock_t *block, uop_t *uop)
     int src_size_b = IREG_GET_SIZE(uop->src_reg_b_real);
 
     if (REG_IS_Q(dest_size) && REG_IS_Q(src_size_a) && REG_IS_Q(src_size_b)) {
+#if defined(__APPLE__) && defined(__aarch64__) && defined(NEW_DYNAREC_BACKEND)
         if (codegen_backend_is_apple_arm64()) {
             host_arm64_SQSUB_V4H(block, dest_reg, src_reg_a, src_reg_b);
             return 0;
+        } else {
+            fatal("PSUBSW not supported on generic ARM64\n");
         }
-
-        host_arm64_SQSUB_V4H(block, dest_reg, src_reg_a, src_reg_b);
-        return 0;
+#else
+        fatal("PSUBSW not supported on this platform\n");
+#endif
     }
 
     fatal("PSUBSW %02x %02x %02x\n", uop->dest_reg_a_real, uop->src_reg_a_real, uop->src_reg_b_real);
@@ -2381,13 +2521,16 @@ codegen_PSUBUSB(codeblock_t *block, uop_t *uop)
     int src_size_b = IREG_GET_SIZE(uop->src_reg_b_real);
 
     if (REG_IS_Q(dest_size) && REG_IS_Q(src_size_a) && REG_IS_Q(src_size_b)) {
+#if defined(__APPLE__) && defined(__aarch64__) && defined(NEW_DYNAREC_BACKEND)
         if (codegen_backend_is_apple_arm64()) {
             host_arm64_UQSUB_V8B(block, dest_reg, src_reg_a, src_reg_b);
             return 0;
+        } else {
+            fatal("PSUBUSB not supported on generic ARM64\n");
         }
-
-        host_arm64_UQSUB_V8B(block, dest_reg, src_reg_a, src_reg_b);
-        return 0;
+#else
+        fatal("PSUBUSB not supported on this platform\n");
+#endif
     }
 
     fatal("PSUBUSB %02x %02x %02x\n", uop->dest_reg_a_real, uop->src_reg_a_real, uop->src_reg_b_real);
@@ -2405,13 +2548,16 @@ codegen_PSUBUSW(codeblock_t *block, uop_t *uop)
     int src_size_b = IREG_GET_SIZE(uop->src_reg_b_real);
 
     if (REG_IS_Q(dest_size) && REG_IS_Q(src_size_a) && REG_IS_Q(src_size_b)) {
+#if defined(__APPLE__) && defined(__aarch64__) && defined(NEW_DYNAREC_BACKEND)
         if (codegen_backend_is_apple_arm64()) {
             host_arm64_UQSUB_V4H(block, dest_reg, src_reg_a, src_reg_b);
             return 0;
+        } else {
+            fatal("PSUBUSW not supported on generic ARM64\n");
         }
-
-        host_arm64_UQSUB_V4H(block, dest_reg, src_reg_a, src_reg_b);
-        return 0;
+#else
+        fatal("PSUBUSW not supported on this platform\n");
+#endif
     }
 
     fatal("PSUBUSW %02x %02x %02x\n", uop->dest_reg_a_real, uop->src_reg_a_real, uop->src_reg_b_real);
@@ -2430,7 +2576,15 @@ codegen_PUNPCKHBW(codeblock_t *block, uop_t *uop)
     int src_size_b = IREG_GET_SIZE(uop->src_reg_b_real);
 
     if (REG_IS_Q(dest_size) && REG_IS_Q(src_size_a) && REG_IS_Q(src_size_b)) {
-        host_arm64_ZIP2_V8B(block, dest_reg, src_reg_a, src_reg_b);
+#if defined(__APPLE__) && defined(__aarch64__) && defined(NEW_DYNAREC_BACKEND)
+        if (codegen_backend_is_apple_arm64()) {
+            host_arm64_ZIP2_V8B(block, dest_reg, src_reg_a, src_reg_b);
+        } else {
+            fatal("PUNPCKHBW not supported on generic ARM64\n");
+        }
+#else
+        fatal("PUNPCKHBW not supported on this platform\n");
+#endif
     } else
         fatal("PUNPCKHBW %02x %02x %02x\n", uop->dest_reg_a_real, uop->src_reg_a_real, uop->src_reg_b_real);
 
@@ -2447,7 +2601,15 @@ codegen_PUNPCKHWD(codeblock_t *block, uop_t *uop)
     int src_size_b = IREG_GET_SIZE(uop->src_reg_b_real);
 
     if (REG_IS_Q(dest_size) && REG_IS_Q(src_size_a) && REG_IS_Q(src_size_b)) {
-        host_arm64_ZIP2_V4H(block, dest_reg, src_reg_a, src_reg_b);
+#if defined(__APPLE__) && defined(__aarch64__) && defined(NEW_DYNAREC_BACKEND)
+        if (codegen_backend_is_apple_arm64()) {
+            host_arm64_ZIP2_V4H(block, dest_reg, src_reg_a, src_reg_b);
+        } else {
+            fatal("PUNPCKHWD not supported on generic ARM64\n");
+        }
+#else
+        fatal("PUNPCKHWD not supported on this platform\n");
+#endif
     } else
         fatal("PUNPCKHWD %02x %02x %02x\n", uop->dest_reg_a_real, uop->src_reg_a_real, uop->src_reg_b_real);
 
@@ -2464,7 +2626,15 @@ codegen_PUNPCKHDQ(codeblock_t *block, uop_t *uop)
     int src_size_b = IREG_GET_SIZE(uop->src_reg_b_real);
 
     if (REG_IS_Q(dest_size) && REG_IS_Q(src_size_a) && REG_IS_Q(src_size_b)) {
-        host_arm64_ZIP2_V2S(block, dest_reg, src_reg_a, src_reg_b);
+#if defined(__APPLE__) && defined(__aarch64__) && defined(NEW_DYNAREC_BACKEND)
+        if (codegen_backend_is_apple_arm64()) {
+            host_arm64_ZIP2_V2S(block, dest_reg, src_reg_a, src_reg_b);
+        } else {
+            fatal("PUNPCKHDQ not supported on generic ARM64\n");
+        }
+#else
+        fatal("PUNPCKHDQ not supported on this platform\n");
+#endif
     } else
         fatal("PUNPCKHDQ %02x %02x %02x\n", uop->dest_reg_a_real, uop->src_reg_a_real, uop->src_reg_b_real);
 
@@ -2481,7 +2651,15 @@ codegen_PUNPCKLBW(codeblock_t *block, uop_t *uop)
     int src_size_b = IREG_GET_SIZE(uop->src_reg_b_real);
 
     if (REG_IS_Q(dest_size) && REG_IS_Q(src_size_a) && REG_IS_Q(src_size_b)) {
-        host_arm64_ZIP1_V8B(block, dest_reg, src_reg_a, src_reg_b);
+#if defined(__APPLE__) && defined(__aarch64__) && defined(NEW_DYNAREC_BACKEND)
+        if (codegen_backend_is_apple_arm64()) {
+            host_arm64_ZIP1_V8B(block, dest_reg, src_reg_a, src_reg_b);
+        } else {
+            fatal("PUNPCKLBW not supported on generic ARM64\n");
+        }
+#else
+        fatal("PUNPCKLBW not supported on this platform\n");
+#endif
     } else
         fatal("PUNPCKLBW %02x %02x %02x\n", uop->dest_reg_a_real, uop->src_reg_a_real, uop->src_reg_b_real);
 
@@ -2498,7 +2676,15 @@ codegen_PUNPCKLWD(codeblock_t *block, uop_t *uop)
     int src_size_b = IREG_GET_SIZE(uop->src_reg_b_real);
 
     if (REG_IS_Q(dest_size) && REG_IS_Q(src_size_a) && REG_IS_Q(src_size_b)) {
-        host_arm64_ZIP1_V4H(block, dest_reg, src_reg_a, src_reg_b);
+#if defined(__APPLE__) && defined(__aarch64__) && defined(NEW_DYNAREC_BACKEND)
+        if (codegen_backend_is_apple_arm64()) {
+            host_arm64_ZIP1_V4H(block, dest_reg, src_reg_a, src_reg_b);
+        } else {
+            fatal("PUNPCKLWD not supported on generic ARM64\n");
+        }
+#else
+        fatal("PUNPCKLWD not supported on this platform\n");
+#endif
     } else
         fatal("PUNPCKLWD %02x %02x %02x\n", uop->dest_reg_a_real, uop->src_reg_a_real, uop->src_reg_b_real);
 
@@ -2515,7 +2701,15 @@ codegen_PUNPCKLDQ(codeblock_t *block, uop_t *uop)
     int src_size_b = IREG_GET_SIZE(uop->src_reg_b_real);
 
     if (REG_IS_Q(dest_size) && REG_IS_Q(src_size_a) && REG_IS_Q(src_size_b)) {
-        host_arm64_ZIP1_V2S(block, dest_reg, src_reg_a, src_reg_b);
+#if defined(__APPLE__) && defined(__aarch64__) && defined(NEW_DYNAREC_BACKEND)
+        if (codegen_backend_is_apple_arm64()) {
+            host_arm64_ZIP1_V2S(block, dest_reg, src_reg_a, src_reg_b);
+        } else {
+            fatal("PUNPCKLDQ not supported on generic ARM64\n");
+        }
+#else
+        fatal("PUNPCKLDQ not supported on this platform\n");
+#endif
     } else
         fatal("PUNPCKLDQ %02x %02x %02x\n", uop->dest_reg_a_real, uop->src_reg_a_real, uop->src_reg_b_real);
 

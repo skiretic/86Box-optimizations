@@ -23,7 +23,15 @@ static const bench_op_t dyn_ops[] = {
     { "DYN_PSUBSW",  bench_mmx_psubsw  },
     { "DYN_PSUBUSB", bench_mmx_psubusb },
     { "DYN_PSUBUSW", bench_mmx_psubusw },
-    { "DYN_PMADDWD", bench_mmx_pmaddwd }
+    { "DYN_PMADDWD", bench_mmx_pmaddwd },
+    { "DYN_PSRLW",   bench_mmx_psrlw   },
+    { "DYN_PSRLD",   bench_mmx_psrld   },
+    { "DYN_PSRLQ",   bench_mmx_psrlq   },
+    { "DYN_PSRAW",   bench_mmx_psraw   },
+    { "DYN_PSRAD",   bench_mmx_psrad   },
+    { "DYN_PSLLW",   bench_mmx_psllw   },
+    { "DYN_PSLLD",   bench_mmx_pslld   },
+    { "DYN_PSLLQ",   bench_mmx_psllq   }
 };
 #define DYN_OP_COUNT (sizeof(dyn_ops) / sizeof(dyn_ops[0]))
 
@@ -44,7 +52,15 @@ static const char *const dyn_op_names[] = {
     "DYN_PSUBSW",
     "DYN_PSUBUSB",
     "DYN_PSUBUSW",
-    "DYN_PMADDWD"
+    "DYN_PMADDWD",
+    "DYN_PSRLW",
+    "DYN_PSRLD",
+    "DYN_PSRLQ",
+    "DYN_PSRAW",
+    "DYN_PSRAD",
+    "DYN_PSLLW",
+    "DYN_PSLLD",
+    "DYN_PSLLQ"
 };
 
 typedef struct dyn_result {

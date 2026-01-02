@@ -589,6 +589,8 @@ cpu_set(void)
 
 #ifdef USE_DYNAREC
     x86_setopcodes(ops_386, ops_386_0f, dynarec_ops_386, dynarec_ops_386_0f);
+    /* Initialize SSSE3 0F 38 opcode table for new dynarec */
+    /* Table is already statically initialized in codegen_ops.c */
 #else
     x86_setopcodes(ops_386, ops_386_0f);
 #endif /* USE_DYNAREC */

@@ -50,6 +50,7 @@ extern void x86_setopcodes(const OpFn *opcodes, const OpFn *opcodes_0f,
 
 extern const OpFn *x86_dynarec_opcodes;
 extern const OpFn *x86_dynarec_opcodes_0f;
+extern const OpFn *x86_dynarec_opcodes_0f38[];
 extern const OpFn *x86_dynarec_opcodes_d8_a16;
 extern const OpFn *x86_dynarec_opcodes_d8_a32;
 extern const OpFn *x86_dynarec_opcodes_d9_a16;
