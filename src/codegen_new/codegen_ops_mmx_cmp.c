@@ -43,7 +43,7 @@
     uint32_t rop##func(codeblock_t *block, ir_data_t *ir, UNUSED(uint8_t opcode),                  \
                        uint32_t fetchdat, uint32_t op_32, uint32_t op_pc)                          \
     {                                                                                              \
-        if (codegen_backend_is_apple_arm64())                                                      \
+        if (codegen_backend_is_arm64())                                                      \
             return rop##func##_impl(block, ir, fetchdat, op_32, op_pc);                            \
         return rop##func##_impl(block, ir, fetchdat, op_32, op_pc);                                \
     }

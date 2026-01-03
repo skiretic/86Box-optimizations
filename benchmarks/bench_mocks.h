@@ -120,6 +120,13 @@ int      cpu_block_end = 0;
 uint32_t codegen_endpc = 0;
 int      cpu_reps      = 0;
 int      cpu_notreps   = 0;
+void    *codegen_exit_rout = NULL;
+int      codegen_mmx_entered = 0;
+int      codegen_fpu_entered = 0;
+ir_reg_t invalid_ir_reg = { .reg = 0xffffffff };
+
+int codegen_mmx_enter(void) { return 0; }
+int codegen_fp_enter(void) { return 0; }
 
 int
 reg_is_native_size(ir_reg_t ir_reg)

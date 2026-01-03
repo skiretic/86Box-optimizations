@@ -34,6 +34,16 @@ codegen_backend_is_apple_arm64(void)
 #endif
 }
 
+static inline int
+codegen_backend_is_arm64(void)
+{
+#if defined(__aarch64__) && defined(NEW_DYNAREC_BACKEND)
+    return (dynarec_backend == BACKEND_ARM64_APPLE) || (dynarec_backend == BACKEND_ARM64_GENERIC);
+#else
+    return 0;
+#endif
+}
+
 void codegen_backend_init(void);
 void codegen_backend_prologue(codeblock_t *block);
 void codegen_backend_epilogue(codeblock_t *block);

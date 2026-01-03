@@ -22,7 +22,7 @@ ropPAND(codeblock_t *block, ir_data_t *ir, UNUSED(uint8_t opcode), uint32_t fetc
 {
     int dest_reg = (fetchdat >> 3) & 7;
 
-    if (codegen_backend_is_apple_arm64()) {
+    if (codegen_backend_is_arm64()) {
         uop_MMX_ENTER(ir);
         codegen_mark_code_present(block, cs + op_pc, 1);
         if ((fetchdat & 0xc0) == 0xc0) {
@@ -63,7 +63,7 @@ ropPANDN(codeblock_t *block, ir_data_t *ir, UNUSED(uint8_t opcode), uint32_t fet
 {
     int dest_reg = (fetchdat >> 3) & 7;
 
-    if (codegen_backend_is_apple_arm64()) {
+    if (codegen_backend_is_arm64()) {
         uop_MMX_ENTER(ir);
         codegen_mark_code_present(block, cs + op_pc, 1);
         if ((fetchdat & 0xc0) == 0xc0) {
@@ -104,7 +104,7 @@ ropPOR(codeblock_t *block, ir_data_t *ir, UNUSED(uint8_t opcode), uint32_t fetch
 {
     int dest_reg = (fetchdat >> 3) & 7;
 
-    if (codegen_backend_is_apple_arm64()) {
+    if (codegen_backend_is_arm64()) {
         uop_MMX_ENTER(ir);
         codegen_mark_code_present(block, cs + op_pc, 1);
         if ((fetchdat & 0xc0) == 0xc0) {
@@ -145,7 +145,7 @@ ropPXOR(codeblock_t *block, ir_data_t *ir, UNUSED(uint8_t opcode), uint32_t fetc
 {
     int dest_reg = (fetchdat >> 3) & 7;
 
-    if (codegen_backend_is_apple_arm64()) {
+    if (codegen_backend_is_arm64()) {
         uop_MMX_ENTER(ir);
         codegen_mark_code_present(block, cs + op_pc, 1);
         if ((fetchdat & 0xc0) == 0xc0) {

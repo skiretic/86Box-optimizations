@@ -25,7 +25,7 @@ ropPSxxW_imm(codeblock_t *block, ir_data_t *ir, UNUSED(uint8_t opcode), uint32_t
     int shift_raw  = fastreadb(cs + op_pc + 1);
     int shift_mask = shift_raw & 0x0f; /* architectural mask for word elements */
 
-    if (codegen_backend_is_apple_arm64()) {
+    if (codegen_backend_is_arm64()) {
         uop_MMX_ENTER(ir);
         codegen_mark_code_present(block, cs + op_pc, 1);
         switch (op) {
@@ -73,7 +73,7 @@ ropPSxxD_imm(codeblock_t *block, ir_data_t *ir, UNUSED(uint8_t opcode), uint32_t
     int shift_raw  = fastreadb(cs + op_pc + 1);
     int shift_mask = shift_raw & 0x1f; /* architectural mask for dword elements */
 
-    if (codegen_backend_is_apple_arm64()) {
+    if (codegen_backend_is_arm64()) {
         uop_MMX_ENTER(ir);
         codegen_mark_code_present(block, cs + op_pc, 1);
         switch (op) {
@@ -121,7 +121,7 @@ ropPSxxQ_imm(codeblock_t *block, ir_data_t *ir, UNUSED(uint8_t opcode), uint32_t
     int shift_raw  = fastreadb(cs + op_pc + 1);
     int shift_mask = shift_raw & 0x3f; /* architectural mask for qword elements */
 
-    if (codegen_backend_is_apple_arm64()) {
+    if (codegen_backend_is_arm64()) {
         uop_MMX_ENTER(ir);
         codegen_mark_code_present(block, cs + op_pc, 1);
         switch (op) {

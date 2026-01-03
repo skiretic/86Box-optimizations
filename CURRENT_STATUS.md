@@ -80,8 +80,9 @@ The MMX NEON optimization project for Apple Silicon has successfully implemented
 - Build system integration working
 - CI regression detection active
 - **Fresh macOS ARM64 build completed (January 2, 2026)**
-- **86Box.app bundle created with all dependencies**
-- **Benchmark apps available and tested for functionality**
+- **86Box.app bundle created with all dependencies (132MB, 176 bundled libraries)**
+- **Benchmark apps verified working: mmx_neon_micro, dynarec_micro, dynarec_sanity**
+- **Build documentation verified and updated (CMAKE_PREFIX_PATH, benchmark paths)**
 
 ### Performance Impact (30M Iteration Run 20260102-192126)
 - **Packing Operations**: 0.16-0.31x (PACKUSWB, PACKSSWB excellent NEON efficiency vs scalar overhead)
@@ -144,7 +145,7 @@ The MMX NEON optimization project for Apple Silicon has successfully implemented
 ### Architectural Evolution
 - **Apple Silicon Generations**: M1/M2/M3/M4 cache hierarchy differences
 - **NEON Evolution**: Future ARM extensions (SVE, SME) compatibility
-- **x86 Extensions**: SSE/SSE2 migration patterns and opportunities
+- **x86 Extensions**: Migration patterns and opportunities for remaining MMX/3DNow! instructions
 
 ### Ecosystem Integration
 - **CI/CD Enhancement**: More sophisticated performance regression detection

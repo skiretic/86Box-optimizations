@@ -89,6 +89,12 @@ extern codegen_cache_metrics_t codegen_cache_metrics;
 #define CACHE_BLOCK_SIZE_MAX            1280 /* Maximum block budget when pressure is low */
 #define CACHE_BLOCK_SIZE_ADJUST_STEP      64 /* Step size when adapting budget */
 
+/* Apple Silicon L2 prefetch tuning constants */
+#define PREFETCH_DISTANCE_DEFAULT         64  /* Default prefetch distance (1 cache line) */
+#define PREFETCH_DISTANCE_MIN             0   /* No prefetch */
+#define PREFETCH_DISTANCE_MAX            256  /* Max prefetch distance (4 cache lines) */
+#define PREFETCH_DISTANCE_STEP            64  /* Step size for distance adjustment */
+
 typedef struct {
     uint64_t window_hits;    /* Hits in current window */
     uint64_t window_misses;  /* Misses in current window */
@@ -102,6 +108,11 @@ typedef struct {
     int      enabled;              /* 1 if tuning active (Apple ARM64 only) */
     uint64_t last_adjustment_time; /* Timestamp of last tuning adjustment */
     uint32_t block_size_limit;     /* Current adaptive block budget */
+
+    /* Apple Silicon L2 prefetch tuning */
+    uint32_t prefetch_distance;     /* Current L2 prefetch distance in bytes */
+    uint64_t prefetch_hits;         /* Cache hits attributed to prefetch */
+    uint64_t prefetch_misses;       /* Cache misses despite prefetch */
 } codegen_cache_tuning_state_t;
 
 extern codegen_cache_tuning_state_t codegen_cache_tuning;
@@ -118,6 +129,10 @@ double codegen_cache_compute_pressure(void);
 int    codegen_cache_should_preserve_block(codeblock_t *block);
 int    codegen_cache_tuning_get_block_size_limit(void);
 void   codegen_cache_tuning_print_summary(void);
+
+/* Apple Silicon L2 prefetch tuning functions */
+uint32_t codegen_prefetch_get_distance(void);
+void     codegen_prefetch_adjust_distance(int delta);
 
 /*Code block uses FPU*/
 #define CODEBLOCK_HAS_FPU 1

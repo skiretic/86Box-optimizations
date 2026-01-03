@@ -700,7 +700,7 @@ generate_call:
             opcode = fastreadb(cs + next_pc);
             
             op_table           = x86_dynarec_opcodes_0f38;
-            recomp_op_table    = NULL; /* No recompiler for 0F 38 yet */
+            recomp_op_table    = recomp_opcodes_0f38; /* SSSE3 0F 38 recompiler table */
             recomp_opcode_mask = 0xff;
             opcode_mask        = 0xff;
             over              = 1;

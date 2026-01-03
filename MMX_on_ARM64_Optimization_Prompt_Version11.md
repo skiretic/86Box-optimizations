@@ -51,9 +51,10 @@ This project optimizes Pentium MMX emulation performance on Apple Silicon (ARM64
 
 ### [COMPLETED] Build & Validation
 - **Fresh Build**: macOS ARM64 build completed successfully (January 2, 2026)
-- **App Bundle**: 86Box.app created with all dependencies bundled
-- **Benchmark Apps**: mmx_neon_micro.app and dynarec_micro.app built and tested
-- **Verification**: Bundle structure validated, executables functional
+- **App Bundle**: 86Box.app created (132MB) with all 176 dependencies bundled
+- **Benchmark Apps**: mmx_neon_micro.app, dynarec_micro.app, dynarec_sanity.app built and verified
+- **Performance Validation**: NEON optimizations confirmed active (1.7-3.1x speedups)
+- **Build Documentation**: buildinstructions.md verified and updated with correct CMAKE_PREFIX_PATH
 
 ## Current Status
 

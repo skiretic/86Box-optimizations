@@ -23,8 +23,8 @@
     {                                                                                                            \
         int dest_reg = (fetchdat >> 3) & 7;                                                                      \
                                                                                                                  \
-        /* Apple ARM64 NEON fast path */                                                                         \
-        if (codegen_backend_is_apple_arm64()) {                                                                  \
+        /* ARM64 NEON fast path */                                                                         \
+        if (codegen_backend_is_arm64()) {                                                                  \
             uop_MMX_ENTER(ir);                                                                                   \
             codegen_mark_code_present(block, cs + op_pc, 1);                                                     \
             if ((fetchdat & 0xc0) == 0xc0) {                                                                     \
@@ -62,8 +62,8 @@ uint32_t ropPF2ID(codeblock_t *block, ir_data_t *ir, UNUSED(uint8_t opcode), uin
 {
     int dest_reg = (fetchdat >> 3) & 7;
 
-#if defined(__APPLE__) && defined(__aarch64__) && defined(NEW_DYNAREC_BACKEND)
-    if (codegen_backend_is_apple_arm64()) {
+#if defined(__aarch64__) && defined(NEW_DYNAREC_BACKEND)
+    if (codegen_backend_is_arm64()) {
         uop_MMX_ENTER(ir);
         codegen_mark_code_present(block, cs + op_pc, 1);
         if ((fetchdat & 0xc0) == 0xc0) {
@@ -94,8 +94,8 @@ ropPFSUBR(codeblock_t *block, ir_data_t *ir, UNUSED(uint8_t opcode), uint32_t fe
 {
     int dest_reg = (fetchdat >> 3) & 7;
 
-#if defined(__APPLE__) && defined(__aarch64__) && defined(NEW_DYNAREC_BACKEND)
-    if (codegen_backend_is_apple_arm64()) {
+#if defined(__aarch64__) && defined(NEW_DYNAREC_BACKEND)
+    if (codegen_backend_is_arm64()) {
         uop_MMX_ENTER(ir);
         codegen_mark_code_present(block, cs + op_pc, 1);
         if ((fetchdat & 0xc0) == 0xc0) {
@@ -158,8 +158,8 @@ ropPFRCPIT(codeblock_t *block, ir_data_t *ir, UNUSED(uint8_t opcode), uint32_t f
 {
     int dest_reg = (fetchdat >> 3) & 7;
 
-#if defined(__APPLE__) && defined(__aarch64__) && defined(NEW_DYNAREC_BACKEND)
-    if (codegen_backend_is_apple_arm64()) {
+#if defined(__aarch64__) && defined(NEW_DYNAREC_BACKEND)
+    if (codegen_backend_is_arm64()) {
         uop_MMX_ENTER(ir);
         codegen_mark_code_present(block, cs + op_pc, 1);
         if ((fetchdat & 0xc0) == 0xc0) {
@@ -188,8 +188,8 @@ ropPFRCP(codeblock_t *block, ir_data_t *ir, UNUSED(uint8_t opcode), uint32_t fet
 {
     int dest_reg = (fetchdat >> 3) & 7;
 
-#if defined(__APPLE__) && defined(__aarch64__) && defined(NEW_DYNAREC_BACKEND)
-    if (codegen_backend_is_apple_arm64()) {
+#if defined(__aarch64__) && defined(NEW_DYNAREC_BACKEND)
+    if (codegen_backend_is_arm64()) {
         uop_MMX_ENTER(ir);
         codegen_mark_code_present(block, cs + op_pc, 1);
         if ((fetchdat & 0xc0) == 0xc0) {
@@ -219,8 +219,8 @@ ropPFRSQRT(codeblock_t *block, ir_data_t *ir, UNUSED(uint8_t opcode), uint32_t f
 {
     int dest_reg = (fetchdat >> 3) & 7;
 
-#if defined(__APPLE__) && defined(__aarch64__) && defined(NEW_DYNAREC_BACKEND)
-    if (codegen_backend_is_apple_arm64()) {
+#if defined(__aarch64__) && defined(NEW_DYNAREC_BACKEND)
+    if (codegen_backend_is_arm64()) {
         uop_MMX_ENTER(ir);
         codegen_mark_code_present(block, cs + op_pc, 1);
         if ((fetchdat & 0xc0) == 0xc0) {
@@ -244,13 +244,14 @@ ropPFRSQRT(codeblock_t *block, ir_data_t *ir, UNUSED(uint8_t opcode), uint32_t f
 #else
     fatal("3DNow! dynarec PFRSQRT not supported on this platform\n");
 #endif
+    return 0;
 }
 
 uint32_t
 ropPFRSQIT1(codeblock_t *block, ir_data_t *ir, UNUSED(uint8_t opcode), UNUSED(uint32_t fetchdat), UNUSED(uint32_t op_32), uint32_t op_pc)
 {
-#if defined(__APPLE__) && defined(__aarch64__) && defined(NEW_DYNAREC_BACKEND)
-    if (codegen_backend_is_apple_arm64()) {
+#if defined(__aarch64__) && defined(NEW_DYNAREC_BACKEND)
+    if (codegen_backend_is_arm64()) {
         uop_MMX_ENTER(ir);
 
         codegen_mark_code_present(block, cs + op_pc, 2);

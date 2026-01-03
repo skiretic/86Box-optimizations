@@ -16,7 +16,7 @@ These steps reproduce the working build of `86Box.app` described earlier. Feed t
    BREW_PREFIX=$(brew --prefix)
    export PATH="$BREW_PREFIX/opt/qt@6/bin:$PATH"
    export PKG_CONFIG_PATH="$BREW_PREFIX/opt/freetype/lib/pkgconfig:$BREW_PREFIX/opt/libpng/lib/pkgconfig:$BREW_PREFIX/opt/libslirp/lib/pkgconfig:$BREW_PREFIX/opt/openal-soft/lib/pkgconfig:$BREW_PREFIX/opt/rtmidi/lib/pkgconfig:$BREW_PREFIX/opt/fluidsynth/lib/pkgconfig:$BREW_PREFIX/opt/sdl2/lib/pkgconfig:$BREW_PREFIX/opt/qt@6/lib/pkgconfig:$BREW_PREFIX/opt/libserialport/lib/pkgconfig:$BREW_PREFIX/opt/webp/lib/pkgconfig"
-   export CMAKE_PREFIX_PATH="$BREW_PREFIX:$BREW_PREFIX/opt/qt@6/lib/cmake:$BREW_PREFIX/opt/qt@6:$BREW_PREFIX/opt/sdl2:$BREW_PREFIX/opt/freetype:$BREW_PREFIX/opt/libpng:$BREW_PREFIX/opt/libslirp:$BREW_PREFIX/opt/openal-soft:$BREW_PREFIX/opt/rtmidi:$BREW_PREFIX/opt/fluidsynth:$BREW_PREFIX/opt/libserialport"
+   export CMAKE_PREFIX_PATH="$BREW_PREFIX:$BREW_PREFIX/opt/qt@6/lib/cmake:$BREW_PREFIX/opt/qt@6:$BREW_PREFIX/opt/sdl2:$BREW_PREFIX/opt/freetype:$BREW_PREFIX/opt/libpng:$BREW_PREFIX/opt/libslirp:$BREW_PREFIX/opt/openal-soft:$BREW_PREFIX/opt/rtmidi:$BREW_PREFIX/opt/fluidsynth:$BREW_PREFIX/opt/libserialport:$BREW_PREFIX/opt/webp"
    ```
    * `CMAKE_PREFIX_PATH` includes the Homebrew root so `BundleUtilities` finds shared libraries like `libsharpyuv`, `libwebp`, and the Qt frameworks/plugins.  
    * `PKG_CONFIG_PATH` exposes pkg-config metadata for dependencies such as `freetype`, `SDL2`, `serialport`, and `webp`.
@@ -61,13 +61,13 @@ These steps reproduce the working build of `86Box.app` described earlier. Feed t
 After building, verify the optimizations with the benchmark suite:
 ```sh
 # MMX NEON vs Scalar performance (30M iterations)
-./build/benchmarks/mmx_neon_micro.app/Contents/MacOS/mmx_neon_micro --iters=30000000 --impl=neon
+./dist/bin/mmx_neon_micro.app/Contents/MacOS/mmx_neon_micro --iters=30000000 --impl=neon
 
 # Dynarec IR integration testing (30M iterations)
-./build/benchmarks/dynarec_micro.app/Contents/MacOS/dynarec_micro --iters=30000000 --impl=neon
+./dist/bin/dynarec_micro.app/Contents/MacOS/dynarec_micro --iters=30000000 --impl=neon
 
 # IR validation and cache metrics sanity check
-./build/benchmarks/dynarec_sanity.app/Contents/MacOS/dynarec_sanity
+./dist/bin/dynarec_sanity.app/Contents/MacOS/dynarec_sanity
 
 # PSHUFB high-bit masking regression (included in suite)
 # PSHUFB_MASKED runs as part of mmx_neon_micro to ensure masked lanes zero correctly on NEON vs scalar
@@ -76,7 +76,7 @@ After building, verify the optimizations with the benchmark suite:
 Notes:
 - All relevant Build instructions reflect the final working configuration described earlier; no extra patches are required besides the Qt plugin copy fix introduced in `src/qt/CMakeLists.txt`.
 - Use Ninja for builds to ensure fast incremental rebuilds; switching generators requires adjusting the `cmake` configure/build commands accordingly.
-- **Benchmark Suite**: Use `mmx_neon_micro` and `dynarec_micro` for performance verification, and `dynarec_sanity` for IR validation. Executables are in `build/benchmarks/*.app/Contents/MacOS/`.
+- **Benchmark Suite**: Use `mmx_neon_micro` and `dynarec_micro` for performance verification, and `dynarec_sanity` for IR validation. Executables are in `dist/bin/*.app/Contents/MacOS/`.
 
 ## Automated Performance Profiling
 For repeatable profiling runs (microbenchmarks + sanity harness) use the helper script:

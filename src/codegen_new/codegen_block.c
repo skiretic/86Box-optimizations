@@ -516,11 +516,21 @@ codegen_cache_tuning_init(void)
 {
     memset(&codegen_cache_tuning, 0, sizeof(codegen_cache_tuning));
     codegen_cache_tuning.block_size_limit = CACHE_BLOCK_SIZE_DEFAULT;
+    codegen_cache_tuning.prefetch_distance = PREFETCH_DISTANCE_DEFAULT;
 
 #if defined(__APPLE__) && defined(__aarch64__) && defined(NEW_DYNAREC_BACKEND)
     if (codegen_backend_is_apple_arm64()) {
         codegen_cache_tuning.enabled = 1;
         pclog("Adaptive cache tuning enabled for Apple ARM64\n");
+    }
+#endif
+
+#if defined(__aarch64__) && defined(NEW_DYNAREC_BACKEND)
+    if (codegen_backend_is_arm64() && !codegen_backend_is_apple_arm64()) {
+        codegen_cache_tuning.enabled = 1;
+        /* Use more conservative prefetch distance for generic ARM64 */
+        codegen_cache_tuning.prefetch_distance = 64; /* Fixed 64-byte prefetch for generic ARM64 */
+        pclog("Basic cache tuning enabled for generic ARM64\n");
     }
 #endif
 }
@@ -538,6 +548,15 @@ codegen_cache_tuning_update(void)
         /* Calculate pressure from current window */
         codegen_cache_tuning.cache_pressure = codegen_cache_compute_pressure();
         codegen_cache_tuning_adjust_budget();
+
+        /* Adjust L2 prefetch distance based on cache pressure */
+        if (codegen_cache_tuning.cache_pressure >= CACHE_PRESSURE_HIGH_THRESHOLD) {
+            /* High pressure - try increasing prefetch distance to bring more data into L2 */
+            codegen_prefetch_adjust_distance(+1);
+        } else if (codegen_cache_tuning.cache_pressure <= CACHE_PRESSURE_LOW_THRESHOLD) {
+            /* Low pressure - reduce prefetch distance to avoid unnecessary prefetches */
+            codegen_prefetch_adjust_distance(-1);
+        }
 
         /* Reset window counters */
         codegen_cache_tuning.window_hits          = 0;
@@ -630,6 +649,7 @@ codegen_cache_tuning_print_summary(void)
         double save_rate = (double) codegen_cache_tuning.reuse_saved / (double) (codegen_cache_tuning.total_evictions + codegen_cache_tuning.reuse_saved) * 100.0;
         pclog("  Save Rate:       %.2f%%\n", save_rate);
     }
+    pclog("  L2 Prefetch Distance: %u bytes\n", codegen_cache_tuning.prefetch_distance);
     pclog("=============================\n");
 }
 
@@ -1064,5 +1084,43 @@ codegen_mark_code_present_multibyte(codeblock_t *block, uint32_t start_pc, int l
                     block->page_mask |= ((uint64_t) 1 << start_pc_shifted);
             }
         }
+    }
+}
+
+/* Apple Silicon L2 prefetch tuning functions */
+uint32_t
+codegen_prefetch_get_distance(void)
+{
+    return codegen_cache_tuning.prefetch_distance;
+}
+
+void
+codegen_prefetch_adjust_distance(int delta)
+{
+    if (!codegen_cache_tuning.enabled)
+        return;
+
+    uint32_t new_distance = codegen_cache_tuning.prefetch_distance;
+
+    if (delta > 0) {
+        if (new_distance < PREFETCH_DISTANCE_MAX) {
+            uint32_t step = (PREFETCH_DISTANCE_MAX - new_distance) < PREFETCH_DISTANCE_STEP
+                ? (PREFETCH_DISTANCE_MAX - new_distance)
+                : PREFETCH_DISTANCE_STEP;
+            new_distance += step;
+        }
+    } else if (delta < 0) {
+        if (new_distance > PREFETCH_DISTANCE_MIN) {
+            uint32_t step = new_distance < PREFETCH_DISTANCE_STEP
+                ? new_distance
+                : PREFETCH_DISTANCE_STEP;
+            new_distance -= step;
+        }
+    }
+
+    if (new_distance != codegen_cache_tuning.prefetch_distance) {
+        pclog("L2 prefetch tuning: distance %u -> %u bytes\n",
+              codegen_cache_tuning.prefetch_distance, new_distance);
+        codegen_cache_tuning.prefetch_distance = new_distance;
     }
 }

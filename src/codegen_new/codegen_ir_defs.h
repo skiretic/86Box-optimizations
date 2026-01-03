@@ -50,8 +50,10 @@
 #define UOP_LOAD_SEG (UOP_TYPE_PARAMS_REGS | UOP_TYPE_PARAMS_POINTER | 0x14 | UOP_TYPE_BARRIER)
 /*UOP_JMP - jump to ptr*/
 #define UOP_JMP (UOP_TYPE_PARAMS_POINTER | 0x15 | UOP_TYPE_ORDER_BARRIER)
-/*UOP_CALL_FUNC - call instruction handler at p, dest_reg = return value*/
+/*UOP_CALL_FUNC_RESULT - call instruction handler at p, dest_reg = return value*/
 #define UOP_CALL_FUNC_RESULT (UOP_TYPE_PARAMS_REGS | UOP_TYPE_PARAMS_POINTER | 0x16 | UOP_TYPE_BARRIER)
+/*UOP_CALL_FUNC_RESULT_PRESERVE - call instruction handler at p, dest_reg = return value (preserves non-volatile regs)*/
+#define UOP_CALL_FUNC_RESULT_PRESERVE (UOP_TYPE_PARAMS_REGS | UOP_TYPE_PARAMS_POINTER | 0x16 | UOP_TYPE_ORDER_BARRIER)
 /*UOP_JMP_DEST - jump to ptr*/
 #define UOP_JMP_DEST       (UOP_TYPE_PARAMS_IMM | UOP_TYPE_PARAMS_POINTER | 0x17 | UOP_TYPE_ORDER_BARRIER | UOP_TYPE_JUMP)
 #define UOP_NOP_BARRIER    (UOP_TYPE_BARRIER | 0x18)
@@ -704,6 +706,7 @@ extern int codegen_fp_enter(void);
 
 #define uop_CALL_FUNC(ir, p)                                     uop_gen_pointer(UOP_CALL_FUNC, ir, p)
 #define uop_CALL_FUNC_RESULT(ir, dst_reg, p)                     uop_gen_reg_dst_pointer(UOP_CALL_FUNC_RESULT, ir, dst_reg, p)
+#define uop_CALL_FUNC_RESULT_PRESERVE(ir, dst_reg, p)            uop_gen_reg_dst_pointer(UOP_CALL_FUNC_RESULT_PRESERVE, ir, dst_reg, p)
 #define uop_CALL_INSTRUCTION_FUNC(ir, p, imm)                    uop_gen_pointer_imm(UOP_CALL_INSTRUCTION_FUNC, ir, p, imm)
 
 #define uop_CMP_IMM_JZ(ir, src_reg, imm, p)                      uop_gen_reg_src_pointer_imm(UOP_CMP_IMM_JZ, ir, src_reg, p, imm)
@@ -753,7 +756,7 @@ extern int codegen_fp_enter(void);
         do {                                                             \
             if (!codegen_mmx_entered) {                                  \
                 uop_MOV_IMM(ir, IREG_oldpc, cpu_state.oldpc);            \
-                uop_CALL_FUNC_RESULT(ir, IREG_temp0, codegen_mmx_enter); \
+                uop_CALL_FUNC_RESULT_PRESERVE(ir, IREG_temp0, codegen_mmx_enter); \
                 uop_CMP_IMM_JZ(ir, IREG_temp0, 1, codegen_exit_rout);    \
             }                                                            \
             codegen_mmx_entered = 1;                                     \

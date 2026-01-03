@@ -50,6 +50,51 @@ test_ir_generation()
 }
 
 void
+test_mmx_enter_optimization()
+{
+    printf("\n--- Testing MMX_ENTER Optimization ---\n");
+
+    ir_data_t *ir = codegen_ir_init();
+    codeblock_t *block = calloc(1, sizeof(codeblock_t));
+    ir->block = block;
+
+    // Reset global state for MMX tracking
+    extern int codegen_mmx_entered;
+    codegen_mmx_entered = 0;
+
+    printf("Generating MMX_ENTER...\n");
+    uop_MMX_ENTER(ir);
+
+    if (ir->wr_pos > 0) {
+        // Find the CALL uop. It might not be the first one (MOV_IMM etc might precede it)
+        int found = 0;
+        for (int i = 0; i < ir->wr_pos; ++i) {
+            uop_t *uop = &ir->uops[i];
+            // Check for UOP_CALL_FUNC_RESULT (0x16) and UOP_TYPE_ORDER_BARRIER (1<<27)
+            // UOP_MASK is 0xffff. 0x16 is the op.
+            if ((uop->type & UOP_MASK) == 0x16) {
+                found = 1;
+                if (uop->type & UOP_TYPE_ORDER_BARRIER) {
+                    printf("SUCCESS: MMX_ENTER uses ORDER_BARRIER (Registers Preserved).\n");
+                } else if (uop->type & UOP_TYPE_BARRIER) {
+                    printf("FAILURE: MMX_ENTER uses BARRIER (Registers Flushed/Invalidated).\n");
+                } else {
+                    printf("FAILURE: MMX_ENTER uses unknown barrier type: %08X\n", uop->type);
+                }
+            }
+        }
+        if (!found) {
+             printf("WARNING: MMX_ENTER did not emit a CALL uOP (maybe already entered?)\n");
+        }
+    } else {
+        printf("FAILURE: MMX_ENTER generated no uOPs.\n");
+    }
+
+    free(block);
+    free(ir);
+}
+
+void
 test_cache_metrics()
 {
     printf("\n--- Testing Cache Metrics Infrastructure ---\n");
@@ -79,6 +124,7 @@ main(int argc, char **argv)
     printf("Platform: Apple Silicon (ARM64) Mock Mode\n\n");
 
     test_ir_generation();
+    test_mmx_enter_optimization();
     test_cache_metrics();
 
     printf("\nSanity checks complete.\n");
