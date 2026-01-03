@@ -68,3 +68,5 @@ CMakeLists.txt.user
 .idea
 build/
 dist/
+perf_logs/
+GEMINI.md
