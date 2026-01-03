@@ -25,6 +25,8 @@ static uint8_t host_fp_reg_dirty[CODEGEN_HOST_FP_REGS];
 #if defined __aarch64__ || defined _M_ARM64
 ir_reg_t       host_mmx_regs[CODEGEN_HOST_MMX_REGS];
 static uint8_t host_mmx_reg_dirty[CODEGEN_HOST_MMX_REGS];
+static uint64_t mmx_residency_flushes;
+static uint64_t mmx_residency_writebacks;
 #endif
 
 typedef struct host_reg_set_t {
@@ -881,10 +883,12 @@ codegen_reg_flush(UNUSED(ir_data_t *ir), codeblock_t *block)
         }
     }
 #if defined __aarch64__ || defined _M_ARM64
+    mmx_residency_flushes++;
     reg_set = &host_mmx_reg_set;
     for (c = 0; c < reg_set->nr_regs; c++) {
         if (!ir_reg_is_invalid(reg_set->regs[c]) && reg_set->dirty[c]) {
             codegen_reg_writeback(reg_set, block, c, 0);
+            mmx_residency_writebacks++;
         }
         if (reg_set->reg_list[c].flags & HOST_REG_FLAG_VOLATILE) {
             reg_set->regs[c]  = invalid_ir_reg;
@@ -918,10 +922,12 @@ codegen_reg_flush_invalidate(UNUSED(ir_data_t *ir), codeblock_t *block)
         reg_set->dirty[c] = 0;
     }
 #if defined __aarch64__ || defined _M_ARM64
+    mmx_residency_flushes++;
     reg_set = &host_mmx_reg_set;
     for (c = 0; c < reg_set->nr_regs; c++) {
         if (!ir_reg_is_invalid(reg_set->regs[c]) && reg_set->dirty[c]) {
             codegen_reg_writeback(reg_set, block, c, 1);
+            mmx_residency_writebacks++;
         }
         reg_set->regs[c]  = invalid_ir_reg;
         reg_set->dirty[c] = 0;
@@ -969,3 +975,21 @@ codegen_reg_process_dead_list(ir_data_t *ir)
         reg_dead_list = regv->next;
     }
 }
+
+#if defined __aarch64__ || defined _M_ARM64
+void
+codegen_reg_mmx_residency_reset(void)
+{
+    mmx_residency_flushes    = 0;
+    mmx_residency_writebacks = 0;
+}
+
+void
+codegen_reg_mmx_residency_snapshot(uint64_t *flushes, uint64_t *writebacks)
+{
+    if (flushes)
+        *flushes = mmx_residency_flushes;
+    if (writebacks)
+        *writebacks = mmx_residency_writebacks;
+}
+#endif

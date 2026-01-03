@@ -1,6 +1,10 @@
 #pragma once
 
 #include <stdint.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include <math.h>
 #include <time.h>
 
 #if defined(__aarch64__)
@@ -54,6 +58,199 @@ bench_mmx_paddb(uint64_t iters, impl_kind_t impl)
         BENCH_CLOBBER();
     }
     sink += a[0];
+    return (double) (bench_now_ns() - start + sink);
+}
+
+/* 3DNow! microbenchmarks for scalar vs NEON parity */
+static inline double
+bench_3dnow_pfadd(uint64_t iters, impl_kind_t impl)
+{
+    float    a[2] = { 1.0f, -2.0f };
+    float    b[2] = { 3.0f,  4.0f };
+    uint64_t sink = 0;
+
+    uint64_t start = bench_now_ns();
+#if defined(__aarch64__)
+    if (impl == IMPL_NEON) {
+        float32x2_t va = vld1_f32(a);
+        float32x2_t vb = vld1_f32(b);
+        for (uint64_t i = 0; i < iters; ++i) {
+            float32x2_t vc = vadd_f32(va, vb);
+            vst1_f32(a, vc);
+            va = vc;
+            BENCH_CLOBBER();
+        }
+        sink += (uint64_t) a[0];
+        return (double) (bench_now_ns() - start + sink);
+    }
+#endif
+    (void) impl;
+    for (uint64_t i = 0; i < iters; ++i) {
+        a[0] = a[0] + b[0];
+        a[1] = a[1] + b[1];
+        BENCH_CLOBBER();
+    }
+    sink += (uint64_t) a[0];
+    return (double) (bench_now_ns() - start + sink);
+}
+
+static inline double
+bench_3dnow_pfmax(uint64_t iters, impl_kind_t impl)
+{
+    float    a[2] = { 1.0f, -5.0f };
+    float    b[2] = { 2.0f, -6.0f };
+    uint64_t sink = 0;
+
+    uint64_t start = bench_now_ns();
+#if defined(__aarch64__)
+    if (impl == IMPL_NEON) {
+        float32x2_t va = vld1_f32(a);
+        float32x2_t vb = vld1_f32(b);
+        for (uint64_t i = 0; i < iters; ++i) {
+            float32x2_t vc = vmax_f32(va, vb);
+            vst1_f32(a, vc);
+            va = vc;
+            BENCH_CLOBBER();
+        }
+        sink += (uint64_t) a[0];
+        return (double) (bench_now_ns() - start + sink);
+    }
+#endif
+    (void) impl;
+    for (uint64_t i = 0; i < iters; ++i) {
+        a[0] = (a[0] > b[0]) ? a[0] : b[0];
+        a[1] = (a[1] > b[1]) ? a[1] : b[1];
+        BENCH_CLOBBER();
+    }
+    sink += (uint64_t) a[0];
+    return (double) (bench_now_ns() - start + sink);
+}
+
+static inline double
+bench_3dnow_pfmin(uint64_t iters, impl_kind_t impl)
+{
+    float    a[2] = { 1.0f, -5.0f };
+    float    b[2] = { 2.0f, -6.0f };
+    uint64_t sink = 0;
+
+    uint64_t start = bench_now_ns();
+#if defined(__aarch64__)
+    if (impl == IMPL_NEON) {
+        float32x2_t va = vld1_f32(a);
+        float32x2_t vb = vld1_f32(b);
+        for (uint64_t i = 0; i < iters; ++i) {
+            float32x2_t vc = vmin_f32(va, vb);
+            vst1_f32(a, vc);
+            va = vc;
+            BENCH_CLOBBER();
+        }
+        sink += (uint64_t) a[0];
+        return (double) (bench_now_ns() - start + sink);
+    }
+#endif
+    (void) impl;
+    for (uint64_t i = 0; i < iters; ++i) {
+        a[0] = (a[0] < b[0]) ? a[0] : b[0];
+        a[1] = (a[1] < b[1]) ? a[1] : b[1];
+        BENCH_CLOBBER();
+    }
+    sink += (uint64_t) a[0];
+    return (double) (bench_now_ns() - start + sink);
+}
+
+static inline double
+bench_3dnow_pfmul(uint64_t iters, impl_kind_t impl)
+{
+    float    a[2] = { 1.5f, -2.5f };
+    float    b[2] = { 3.5f,  4.5f };
+    uint64_t sink = 0;
+
+    uint64_t start = bench_now_ns();
+#if defined(__aarch64__)
+    if (impl == IMPL_NEON) {
+        float32x2_t va = vld1_f32(a);
+        float32x2_t vb = vld1_f32(b);
+        for (uint64_t i = 0; i < iters; ++i) {
+            float32x2_t vc = vmul_f32(va, vb);
+            vst1_f32(a, vc);
+            va = vc;
+            BENCH_CLOBBER();
+        }
+        sink += (uint64_t) a[0];
+        return (double) (bench_now_ns() - start + sink);
+    }
+#endif
+    (void) impl;
+    for (uint64_t i = 0; i < iters; ++i) {
+        a[0] = a[0] * b[0];
+        a[1] = a[1] * b[1];
+        BENCH_CLOBBER();
+    }
+    sink += (uint64_t) a[0];
+    return (double) (bench_now_ns() - start + sink);
+}
+
+static inline double
+bench_3dnow_pfrcp(uint64_t iters, impl_kind_t impl)
+{
+    float    a[2] = { 2.0f, -4.0f };
+    uint64_t sink = 0;
+
+    uint64_t start = bench_now_ns();
+#if defined(__aarch64__)
+    if (impl == IMPL_NEON) {
+        float32x2_t va = vld1_f32(a);
+        for (uint64_t i = 0; i < iters; ++i) {
+            float32x2_t vone = vdup_n_f32(1.0f);
+            float32x2_t vc   = vdiv_f32(vone, va);
+            vst1_f32(a, vc);
+            va = vc;
+            BENCH_CLOBBER();
+        }
+        sink += (uint64_t) a[0];
+        return (double) (bench_now_ns() - start + sink);
+    }
+#endif
+    (void) impl;
+    for (uint64_t i = 0; i < iters; ++i) {
+        a[0] = 1.0f / a[0];
+        a[1] = 1.0f / a[1];
+        BENCH_CLOBBER();
+    }
+    sink += (uint64_t) a[0];
+    return (double) (bench_now_ns() - start + sink);
+}
+
+static inline double
+bench_3dnow_pfrsqrt(uint64_t iters, impl_kind_t impl)
+{
+    float    a[2] = { 4.0f, 9.0f };
+    uint64_t sink = 0;
+
+    uint64_t start = bench_now_ns();
+#if defined(__aarch64__)
+    if (impl == IMPL_NEON) {
+        float32x2_t va = vld1_f32(a);
+        for (uint64_t i = 0; i < iters; ++i) {
+            /* refine reciprocal sqrt then invert to match scalar semantics */
+            float32x2_t vrsqrt = vrsqrte_f32(va);
+            float32x2_t vc     = vmul_f32(va, vrsqrt);
+            vc                 = vdiv_f32(vdup_n_f32(1.0f), vc);
+            vst1_f32(a, vc);
+            va = vc;
+            BENCH_CLOBBER();
+        }
+        sink += (uint64_t) a[0];
+        return (double) (bench_now_ns() - start + sink);
+    }
+#endif
+    (void) impl;
+    for (uint64_t i = 0; i < iters; ++i) {
+        a[0] = 1.0f / sqrtf(a[0]);
+        a[1] = 1.0f / sqrtf(a[1]);
+        BENCH_CLOBBER();
+    }
+    sink += (uint64_t) a[0];
     return (double) (bench_now_ns() - start + sink);
 }
 
@@ -717,6 +914,66 @@ bench_mmx_pshufb(uint64_t iters, impl_kind_t impl)
             uint8x8_t vc = vtbl1_u8(va, vb);
             vst1_u8(a, vc);
             va = vc;
+            BENCH_CLOBBER();
+        }
+        sink += a[0];
+        return (double) (bench_now_ns() - start + sink);
+    }
+#endif
+    (void) impl;
+    for (uint64_t i = 0; i < iters; ++i) {
+        uint8_t result[8];
+        for (int j = 0; j < 8; ++j) {
+            uint8_t idx = b[j];
+            result[j]   = (idx & 0x80) ? 0 : a[idx & 7];
+        }
+        memcpy(a, result, 8);
+        BENCH_CLOBBER();
+    }
+    sink += a[0];
+    return (double) (bench_now_ns() - start + sink);
+}
+
+/* PSHUFB with high-bit masking regression coverage */
+static inline double
+bench_mmx_pshufb_masked(uint64_t iters, impl_kind_t impl)
+{
+    uint8_t  a[8] = { 1, 2, 3, 4, 5, 6, 7, 8 };
+    uint8_t  b[8] = { 0x80, 0x81, 0x02, 0x83, 0x04, 0x05, 0x86, 0x07 }; // mix of masked and valid indices
+    uint8_t  expected[8];
+    uint64_t sink = 0;
+
+    /* Scalar preflight to set expected masked behavior */
+    for (int j = 0; j < 8; ++j) {
+        uint8_t idx = b[j];
+        expected[j] = (idx & 0x80) ? 0 : a[idx & 0x07];
+    }
+
+    uint64_t start = bench_now_ns();
+#if defined(__aarch64__)
+    if (impl == IMPL_NEON) {
+        const uint8x8_t vmask_hi = vdup_n_u8(0x80);
+        const uint8x8_t vzero    = vdup_n_u8(0);
+        uint8x8_t       va       = vld1_u8(a);
+        uint8x8_t       vb       = vld1_u8(b);
+        /* Regression check before timing */
+        {
+            uint8x8_t vc       = vtbl1_u8(va, vb);
+            uint8x8_t hi_mask  = vtst_u8(vb, vmask_hi);       // 0xFF where high bit set
+            uint8x8_t masked   = vbsl_u8(hi_mask, vzero, vc); // zero out masked lanes
+            uint8_t   out[8];
+            vst1_u8(out, masked);
+            if (memcmp(out, expected, sizeof(expected)) != 0) {
+                fprintf(stderr, "PSHUFB_MASKED NEON regression failed\n");
+                exit(1);
+            }
+        }
+        for (uint64_t i = 0; i < iters; ++i) {
+            uint8x8_t vc       = vtbl1_u8(va, vb);
+            uint8x8_t hi_mask  = vtst_u8(vb, vmask_hi);         // 0xFF where high bit set
+            uint8x8_t masked   = vbsl_u8(hi_mask, vzero, vc);   // zero out masked lanes
+            vst1_u8(a, masked);
+            va = masked;
             BENCH_CLOBBER();
         }
         sink += a[0];

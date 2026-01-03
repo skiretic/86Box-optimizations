@@ -68,6 +68,8 @@ typedef struct {
     uint64_t blocks_compiled;
     uint64_t bytes_emitted;
     uint64_t max_block_bytes;
+    uint64_t mmx_spill_loads;
+    uint64_t mmx_spill_stores;
 } codegen_cache_metrics_t;
 
 extern codeblock_t *codeblock;
@@ -79,9 +81,13 @@ extern uint8_t *block_write_data;
 extern codegen_cache_metrics_t codegen_cache_metrics;
 
 /* Adaptive cache tuning state for Apple Silicon block reuse optimization */
-#define CACHE_TUNING_WINDOW_SIZE      1000 /* Rolling window for pressure calculation */
-#define CACHE_PRESSURE_HIGH_THRESHOLD 0.90 /* 90% miss rate = high pressure */
-#define CACHE_PRESSURE_LOW_THRESHOLD  0.70 /* 70% miss rate = low pressure */
+#define CACHE_TUNING_WINDOW_SIZE        1000 /* Rolling window for pressure calculation */
+#define CACHE_PRESSURE_HIGH_THRESHOLD   0.90 /* 90% miss rate = high pressure */
+#define CACHE_PRESSURE_LOW_THRESHOLD    0.70 /* 70% miss rate = low pressure */
+#define CACHE_BLOCK_SIZE_DEFAULT        1000 /* Default block budget in bytes */
+#define CACHE_BLOCK_SIZE_MIN             512 /* Minimum block budget when pressure is high */
+#define CACHE_BLOCK_SIZE_MAX            1280 /* Maximum block budget when pressure is low */
+#define CACHE_BLOCK_SIZE_ADJUST_STEP      64 /* Step size when adapting budget */
 
 typedef struct {
     uint64_t window_hits;    /* Hits in current window */
@@ -95,6 +101,7 @@ typedef struct {
 
     int      enabled;              /* 1 if tuning active (Apple ARM64 only) */
     uint64_t last_adjustment_time; /* Timestamp of last tuning adjustment */
+    uint32_t block_size_limit;     /* Current adaptive block budget */
 } codegen_cache_tuning_state_t;
 
 extern codegen_cache_tuning_state_t codegen_cache_tuning;
@@ -102,12 +109,14 @@ extern codegen_cache_tuning_state_t codegen_cache_tuning;
 void codegen_cache_metrics_reset(void);
 void codegen_cache_metrics_get(codegen_cache_metrics_t *out_metrics);
 void codegen_cache_metrics_print_summary(void);
+extern codegen_cache_metrics_t codegen_cache_metrics;
 
 /* Adaptive cache tuning functions */
 void   codegen_cache_tuning_init(void);
 void   codegen_cache_tuning_update(void);
 double codegen_cache_compute_pressure(void);
 int    codegen_cache_should_preserve_block(codeblock_t *block);
+int    codegen_cache_tuning_get_block_size_limit(void);
 void   codegen_cache_tuning_print_summary(void);
 
 /*Code block uses FPU*/

@@ -471,10 +471,51 @@ codegen_cache_metrics_print_summary(void)
 /* Adaptive cache tuning state (Apple Silicon only) */
 codegen_cache_tuning_state_t codegen_cache_tuning;
 
+static void
+codegen_cache_tuning_adjust_budget(void)
+{
+    if (!codegen_cache_tuning.enabled)
+        return;
+
+    uint32_t new_limit = codegen_cache_tuning.block_size_limit;
+
+    if (codegen_cache_tuning.cache_pressure >= CACHE_PRESSURE_HIGH_THRESHOLD) {
+        if (new_limit > CACHE_BLOCK_SIZE_MIN) {
+            uint32_t delta = (new_limit - CACHE_BLOCK_SIZE_MIN) < CACHE_BLOCK_SIZE_ADJUST_STEP
+                ? (new_limit - CACHE_BLOCK_SIZE_MIN)
+                : CACHE_BLOCK_SIZE_ADJUST_STEP;
+            new_limit -= delta;
+        }
+    } else if (codegen_cache_tuning.cache_pressure <= CACHE_PRESSURE_LOW_THRESHOLD) {
+        if (new_limit < CACHE_BLOCK_SIZE_MAX) {
+            uint32_t delta = (CACHE_BLOCK_SIZE_MAX - new_limit) < CACHE_BLOCK_SIZE_ADJUST_STEP
+                ? (CACHE_BLOCK_SIZE_MAX - new_limit)
+                : CACHE_BLOCK_SIZE_ADJUST_STEP;
+            new_limit += delta;
+        }
+    }
+
+    if (new_limit != codegen_cache_tuning.block_size_limit) {
+        codegen_cache_tuning.block_size_limit = new_limit;
+        pclog("Cache tuning: pressure %.2f%% -> block budget %u bytes\n",
+              codegen_cache_tuning.cache_pressure * 100.0,
+              codegen_cache_tuning.block_size_limit);
+    }
+}
+
+int
+codegen_cache_tuning_get_block_size_limit(void)
+{
+    if (!codegen_cache_tuning.block_size_limit)
+        return CACHE_BLOCK_SIZE_DEFAULT;
+    return codegen_cache_tuning.block_size_limit;
+}
+
 void
 codegen_cache_tuning_init(void)
 {
     memset(&codegen_cache_tuning, 0, sizeof(codegen_cache_tuning));
+    codegen_cache_tuning.block_size_limit = CACHE_BLOCK_SIZE_DEFAULT;
 
 #if defined(__APPLE__) && defined(__aarch64__) && defined(NEW_DYNAREC_BACKEND)
     if (codegen_backend_is_apple_arm64()) {
@@ -496,6 +537,7 @@ codegen_cache_tuning_update(void)
     if (codegen_cache_tuning.window_count >= CACHE_TUNING_WINDOW_SIZE) {
         /* Calculate pressure from current window */
         codegen_cache_tuning.cache_pressure = codegen_cache_compute_pressure();
+        codegen_cache_tuning_adjust_budget();
 
         /* Reset window counters */
         codegen_cache_tuning.window_hits          = 0;

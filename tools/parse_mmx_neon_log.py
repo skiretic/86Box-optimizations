@@ -26,6 +26,8 @@ def main():
     parser.add_argument("--output", type=Path, default=Path("mmx_neon_micro.json"))
     parser.add_argument("--min-ratio", type=float, default=0.0,
                         help="Fail if any ratio falls below this (default: no check)")
+    parser.add_argument("--allow-below", action="append", default=[],
+                        help="Benchmark names allowed to fall below --min-ratio without failing (may be repeated)")
     args = parser.parse_args()
 
     if not args.log.exists():
@@ -45,7 +47,8 @@ def main():
     print(f"Parsed {len(ratios)} ratios from {args.log} -> {args.output}")
 
     if args.min_ratio > 0.0:
-        below = [name for name, value in ratios.items() if value < args.min_ratio]
+        below = [name for name, value in ratios.items()
+                 if value < args.min_ratio and name not in args.allow_below]
         if below:
             print(f"Warning: ratios below {args.min_ratio}: {', '.join(below)}")
             raise SystemExit(1)

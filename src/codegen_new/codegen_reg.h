@@ -413,7 +413,21 @@ void codegen_reg_alloc_register(ir_reg_t dest_reg_a, ir_reg_t src_reg_a, ir_reg_
 
 #ifdef CODEGEN_BACKEND_HAS_MOV_IMM
 int  codegen_reg_is_loaded(ir_reg_t ir_reg);
-void codegen_reg_write_imm(codeblock_t *block, ir_reg_t ir_reg, uint32_t imm_data);
+void codegen_reg_mark_as_required(void);
+void codegen_check_regs(void);
+void codegen_reg_reset(void);
+void codegen_reg_free(ir_reg_t ir_reg);
+void codegen_reg_alloc(ir_data_t *ir, codeblock_t *block, ir_reg_t *dest_reg, ir_reg_t src_reg_a, ir_reg_t src_reg_b);
+void codegen_reg_writeback_all(ir_data_t *ir, codeblock_t *block);
+void codegen_reg_writeback_reg(ir_data_t *ir, codeblock_t *block, ir_reg_t reg);
+void codegen_reg_rename_reg(ir_reg_t dst, ir_reg_t src);
+void codegen_reg_flush(ir_data_t *ir, codeblock_t *block);
+void codegen_reg_flush_invalidate(ir_data_t *ir, codeblock_t *block);
+void codegen_reg_process_dead_list(ir_data_t *ir);
+
+/* MMX residency instrumentation (Apple-only focus, no behavioral change) */
+void codegen_reg_mmx_residency_reset(void);
+void codegen_reg_mmx_residency_snapshot(uint64_t *flushes, uint64_t *writebacks);
 #endif
 
 ir_host_reg_t codegen_reg_alloc_read_reg(codeblock_t *block, ir_reg_t ir_reg, int *host_reg_idx);
@@ -423,4 +437,5 @@ void codegen_reg_rename(codeblock_t *block, ir_reg_t src, ir_reg_t dst);
 
 void codegen_reg_mark_as_required(void);
 void codegen_reg_process_dead_list(struct ir_data_t *ir);
+
 #endif

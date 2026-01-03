@@ -2,20 +2,24 @@
 
 ## IMPLEMENTATION COMPLETE - January 2, 2026
 
-**Status: Core MMX optimizations completed with pack/shuffle operations and MMX state alignment.** The NEON-backed MMX arithmetic, pack/shuffle operations, and aligned MMX state with prefetch stubs are now live in the new dynarec backend for Apple ARM64, with comprehensive benchmarking showing significant performance improvements.
+**Status**: Core MMX optimizations completed with pack/shuffle operations, MMX state alignment, and full Apple-only guard coverage (MMX + 3DNow!).** The NEON-backed MMX arithmetic, pack/shuffle operations, and aligned MMX state with prefetch stubs are now live in the new dynarec backend for Apple ARM64, with comprehensive benchmarking showing significant performance improvements.
 
 ### Key Achievements:
+- **MMX_ENTER fast-path (Apple ARM64 dynarec)**: skips tag rewrites when already in MMX mode and CR0.TS unchanged, reducing entry overhead on MMX-heavy traces.
 - **17 MMX arithmetic ops optimized** with NEON intrinsics (PADDB through PMADDWD)
 - **Pack/shuffle operations completed** - PACKSSWB, PACKUSWB, PSHUFB with NEON
   - **PSHUFB FULLY INTEGRATED**: 0F 38 opcode table, decoder, and handler complete
   - Performance: 1.91x speedup (0.632 ns/iter NEON vs 0.331 ns/iter scalar)
-- **MMX state alignment implemented** - 32-byte aligned backing store with prefetch hints
+- **MMX state alignment implemented** - 32-byte aligned backing store with prefetch stubs
 - **SSSE3 infrastructure added** - 0F 38 prefix support for future SSSE3 instructions
 - **Full benchmark coverage** with microbenchmarks for all ops
 - **Landmark benchmark consolidation** - Unified legacy tests into `dynarec_sanity` with robust IR validation
 - **Performance validated** - 30M iteration runs showing significant NEON speedups (PACKUSWB: 6.01x)
-- **Proper guards implemented** - Apple ARM64 + new dynarec only
-- **Backward compatibility maintained** - scalar fallbacks for other platforms
+- **Proper guards implemented** - Apple ARM64 + new dynarec only (MMX + 3DNow!)
+- **Logic Operations** (PAND, POR, PXOR, PANDN) - Using NEON intrinsics
+- **Shift Operations** (PSLL/PSRL/PSRA variants) - Handler table registered
+- **Pack/Unpack Operations** (PACKSSWB, PACKUSWB, PUNPCK*) - NEON with guards
+- **Compare Operations** (PCMPEQ*, PCMPGT*) - NEON with guards
 
 ### Files Modified:
 - `src/codegen_new/codegen_backend_arm64_uops.c` - NEON implementations for arithmetic, pack, shuffle
@@ -57,8 +61,13 @@ All priority items (PRs 1-7) have been successfully implemented:
 - **Compare Operations** (PCMPEQ*, PCMPGT*) - NEON with guards
 
 **3DNow! Operations Status**:
-- **Note**: All 3DNow! operations (PFADD, PFSUB, PFMUL, PFMAX, PFMIN, PFCMPEQ/GE/GT, PF2ID, PI2FD, PFRCP, PFRSQRT) currently have NEON implementations but lack proper Apple ARM64 guards
-- **Future Work**: 3DNow! operations should receive the same triple-layer guard pattern as MMX operations for platform safety
+- **Complete**: All 14 3DNow! operations (PFADD, PFSUB, PFMUL, PFMAX, PFMIN, PFCMPEQ/GE/GT, PF2ID, PI2FD, PFRCP, PFRSQRT) now have NEON implementations guarded by the triple-layer Apple ARM64 pattern (`#if __APPLE__ && __aarch64__ && NEW_DYNAREC_BACKEND` + `codegen_backend_is_apple_arm64()`), falling back to scalar paths elsewhere.
+
+**Immediate Follow-up for Guarding and Safety**
+- [DONE] Triple-layer guard (`#if defined(__APPLE__) && defined(__aarch64__) && defined(NEW_DYNAREC_BACKEND)` + `codegen_backend_is_apple_arm64()`) now applied to **all 3DNow! uops** so they only emit on Apple ARM64 with new dynarec; scalar fallback retained for other platforms.
+- Add focused regression vectors for **PSHUFB high-bit masking** (indices ≥0x80 must zero) to lock in NEON masking semantics.
+- Prototype **MMX register residency** (pin V8–V15 for MMX live ranges) to cut MEM_LOAD/STORE churn on MMX-heavy traces; fall back to current allocator on non-Apple platforms; pair with spill metrics before enabling by default.
+- Extend the microbenchmark suite with **PSHUFB_MASKED** to validate high-bit zeroing on Apple ARM64 NEON paths alongside scalar reference.
 
 ## 3. Milestones & timeline (completed)
 - **Milestone A (completed)**: Basic NEON arithmetic/logic in dynarec
@@ -74,28 +83,27 @@ All priority items (PRs 1-7) have been successfully implemented:
 Following the successful MMX arithmetic and state optimizations, the next session will focus on:
 
 ### High Priority (Next Session)
-1. **Code Cache Tuning** - Use the new hit/miss/flush instrumentation to adjust block sizing (8–16 KB) and prefetch hints while exposing telemetry during benchmark runs.
-   - **Impact**: Optimized code cache usage for M1/M2/M3, potential 5-15% overall gain
-   - **Effort**: 2.5 days (detailed 4-step plan above)
-   - **Files**: `src/codegen_new/codegen_backend_arm64.c`, `src/codegen_new/codegen_block.c`, `src/codegen_new/codegen.h`, `benchmarks/`
-   - **Detailed Steps**:
-     - Step 1: Analyze current cache metrics from benchmark runs
-     - Step 2: Implement adaptive sizing logic based on hit/miss ratios  
-     - Step 3: Add prefetch hint generation for aligned blocks
-     - Step 4: Validate with microbenchmarks and ensure no regressions
+1. **Code Cache Tuning** - Adaptive block budget and logging complete.
+   - **Impact**: Adaptive block sizing now responds to miss/flush pressure via `codegen_cache_tuning_get_block_size_limit()`; profiling pipeline captures before/after ratios at 30M iterations.
+   - **Status**: [DONE] - Budget enforcement integrated in `386_dynarec.c`, parser & script emit clean logs.
+   - **Next**: Analyze perf_logs artifacts to derive new block size heuristics if needed.
+2. **Real-world Profiling & Log Automation**: Benchmark automation in place; headless traces pending.
+   - **Impact**: Script (`tools/run_perf_profiling.sh`) runs mmx/dynarec/sanity in one pass, logs JSON, and supports allowlists for known <0.5x ratios. Ready for CI ingestion once headless mode lands.
+   - **Next Steps**:
+     - Add headless DOS/Win9x trace launch once emulator supports it.
+     - Feed perf_logs JSON into dashboards for regression tracking.
 
-### Medium Priority (Future Sessions)
-2. **Logic and Shift Operations** - PAND, POR, PXOR, PANDN, PSLL*/PSRL*/PSRA* NEON templates
+3. **Logic and Shift Operations** - PAND, POR, PXOR, PANDN, PSLL*/PSRL*/PSRA* NEON templates (complete)
    - **Impact**: Essential for complete MMX multimedia acceleration
    - **Effort**: 1-1.5 days
    - **Files**: `src/codegen_new/codegen_ops_mmx_logic.c`, `codegen_ops_mmx_shift.c`, `codegen_backend_arm64_uops.c`
 
-3. **PSHUFB Opcode Integration** - Add 0f 38 00 opcode mapping to dynarec (if not already complete)
+4. **PSHUFB Opcode Integration** - Add 0f 38 00 opcode mapping to dynarec (complete)
    - **Impact**: Enable full PSHUFB functionality in dynarec traces
    - **Effort**: 0.5 day
    - **Files**: `src/codegen_new/codegen_ops_mmx_loadstore.c` or relevant opcode file
 
-4. **MMX Register Pinning** - Reserve V8–V15 for MMX on Apple ARM64
+5. **MMX Register Pinning** - Reserve V8–V15 for MMX on Apple ARM64
    - **Impact**: Reduce spills in MMX-heavy traces
    - **Effort**: 1-1.5 days
    - **Files**: `src/codegen_new/codegen_allocator.c`, `codegen_backend_arm64_uops.c`
@@ -190,7 +198,9 @@ The legacy `dynarec_test` and `cache_metric_test` were consolidated into `dynare
 
 **NEXT SESSION PRIORITIES:**
 1. **PSHUFB Integration**: Connect NEON table lookup to dynarec opcode system
-2. **Real-world Profiling**: Measure performance on actual 86Box traces
+2. **Real-world Profiling & Log Automation**: Measure performance on actual 86Box traces and archive benchmark output automatically.
+   - Use `tools/run_perf_profiling.sh [iters]` to execute `mmx_neon_micro`, `dynarec_micro`, and `dynarec_sanity`, emitting logs/JSON artifacts into `perf_logs/<timestamp>/`.
+   - **Next Step**: Extend the script to launch representative DOS/Win9x traces once headless mode lands so full workloads reuse the same logging path.
 3. **Cache Telemetry**: Integrate dynarec cache metrics with benchmarks
 4. **Validation Expansion**: Add edge case testing and boundary conditions
 

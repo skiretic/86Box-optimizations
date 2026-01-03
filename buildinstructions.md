@@ -68,9 +68,20 @@ After building, verify the optimizations with the benchmark suite:
 
 # IR validation and cache metrics sanity check
 ./build/benchmarks/dynarec_sanity.app/Contents/MacOS/dynarec_sanity
+
+# PSHUFB high-bit masking regression (included in suite)
+# PSHUFB_MASKED runs as part of mmx_neon_micro to ensure masked lanes zero correctly on NEON vs scalar
 ```
 
 Notes:
 - All relevant Build instructions reflect the final working configuration described earlier; no extra patches are required besides the Qt plugin copy fix introduced in `src/qt/CMakeLists.txt`.
 - Use Ninja for builds to ensure fast incremental rebuilds; switching generators requires adjusting the `cmake` configure/build commands accordingly.
 - **Benchmark Suite**: Use `mmx_neon_micro` and `dynarec_micro` for performance verification, and `dynarec_sanity` for IR validation. Executables are in `build/benchmarks/*.app/Contents/MacOS/`.
+
+## Automated Performance Profiling
+For repeatable profiling runs (microbenchmarks + sanity harness) use the helper script:
+```sh
+./tools/run_perf_profiling.sh 30000000   # optional iteration override (defaults to 30M)
+```
+- Script checks that all benchmark bundles exist, writes logs into `perf_logs/<timestamp>/`, and parses ratio tables into `.json` using `tools/parse_mmx_neon_log.py` with a 0.5x floor.
+- Outputs `mmx_neon.log/json`, `dynarec_micro.log/json`, and `dynarec_sanity.log` so Instruments or CI jobs can ingest results directly.

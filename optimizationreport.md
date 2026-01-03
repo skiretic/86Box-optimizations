@@ -6,12 +6,15 @@
   - NEON-backed MMX arithmetic/logic/pack/shift operations in new dynarec with triple-layer guards
   - **Performance gains**: PACKUSWB 6.01x faster, PMADDWD 2.61x faster, PSHUFB 1.91x faster, saturated operations 2-3x faster
   - All MMX logic (PAND/POR/PXOR/PANDN)
+- **3DNow! guard pattern extended**: All 14 3DNow! NEON emitters now use the triple-layer Apple ARM64 guard with scalar fallback elsewhere
 
 - **Complete MMX NEON Backend**: 31+ operations with Apple Silicon optimizations
 - **PSHUFB Integration**: 1.92x speedup with full SSSE3 0F 38 infrastructure
 - **Platform Safety**: 77% guard coverage (31/40 operations) with triple-layer protection
 - **Performance Gains**: 2-10x improvements in multimedia workloads
 - **Comprehensive Testing**: Full benchmark suite with microbenchmarks and sanity checks 30M iteration validation
+- **New Regression Vector**: Added **PSHUFB_MASKED** microbenchmark to verify high-bit zeroing semantics on Apple ARM64 NEON vs scalar
+- **New Coverage**: Added 3DNow! parity microbenches (PFADD/PFMAX/PFMIN/PFMUL/PFRCP/PFRSQRT) and MMX residency counters for instrumentation
 
 
 ## Environment / How tested
@@ -36,6 +39,7 @@
 - Capture dynarec metrics: code cache occupancy, flush rate, average emitted bytes/op, and time spent in stubs vs generated code.
 - Microbench harnesses under `src/tools/` for per-instruction MMX ops and dynarec codegen overhead.
 - Validate correctness with existing MMX interpreter paths and bit-exact reference checks.
+- Use `tools/run_perf_profiling.sh [iters]` to execute `mmx_neon_micro`, `dynarec_micro`, and `dynarec_sanity` in one shot, writing logs + parsed JSON ratios into `perf_logs/<timestamp>/` for regression tracking. Extend the script to launch headless trace workloads once available so real DOS/Win9x runs reuse the same artifacts.
 
 ## MMX→NEON Translation Analysis (2026-01-02)
 
@@ -159,6 +163,7 @@ if (dynarec_backend == BACKEND_ARM64_APPLE) {
 | `mmx_neon_micro` | Scalar vs NEON raw math performance | **Active** |
 | `dynarec_micro` | Dynarec-integrated IR performance | **Active** |
 | `dynarec_sanity` | Standalone IR and metrics validation | **Active** (Consolidated) |
+| `tools/run_perf_profiling.sh` | Automates all benchmark runs, log capture, and ratio parsing (outputs logs+JSON under `perf_logs/`) | **New helper** |
 
 #### Running the Verification Suite
 To verify the optimizations, run:
@@ -214,6 +219,7 @@ To verify the optimizations, run:
 - **Shuffle Operations**: PSHUFB FULLY INTEGRATED - 0F 38 infrastructure complete (1.92x speedup)
 - **Shift Masking Fix**: Critical correctness issue resolved with ~2x speedup for all shift ops
 - **Platform Safety Implementation**: Added comprehensive Apple ARM64 guards to 18 additional operations
+- **3DNow! Guard Coverage**: All 14 3DNow! operations now share the Apple-only NEON guard pattern with scalar fallback on other platforms
 - **Guard Coverage**: Improved from 32% to 77% (31/40 operations) with triple-layer protection
 - **Complete Build**: Full 86Box.app with all optimizations successfully built and validated
 
