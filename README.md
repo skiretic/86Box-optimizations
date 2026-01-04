@@ -1,6 +1,10 @@
 86Box
 =====
 
+> [!CAUTION]
+> This branch is an attempt to port the x86-64 Voodoo dynarec to ARM64. It is extremely experimental, not ready for use, and may undergo major code refactoring at any time.
+
+
 [![Build Status](https://ci.86box.net/job/86Box/badge/icon)](https://ci.86box.net/job/86Box/)
 [![License](https://img.shields.io/github/license/86Box/86Box)](COPYING) [![Latest release](https://img.shields.io/github/release/86Box/86Box.svg)](https://github.com/86Box/86Box/releases) [![Downloads](https://img.shields.io/github/downloads/86Box/86Box/total.svg)](https://github.com/86Box/86Box/releases)
 
