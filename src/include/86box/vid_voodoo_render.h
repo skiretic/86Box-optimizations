@@ -1,7 +1,10 @@
 #ifndef VIDEO_VOODOO_RENDER_H
 #define VIDEO_VOODOO_RENDER_H
 
-#if !(defined __amd64__ || defined _M_X64)
+/* Enable codegen on x86-64 and ARM64 */
+#if defined __amd64__ || defined _M_X64 || defined __aarch64__ || defined _M_ARM64
+/* Codegen supported */
+#else
 #    define NO_CODEGEN
 #endif
 
@@ -254,10 +257,10 @@ void voodoo_codegen_close(voodoo_t *voodoo);
                 src_b = (src_b * (255 - dest_a)) / 255;      \
                 break;                                       \
             case AFUNC_ASATURATE:                            \
-                _a        = MIN(src_a, 255 - dest_a);        \
-                src_r     = (dest_r * _a) / 255;             \
-                src_g     = (dest_g * _a) / 255;             \
-                src_b     = (dest_b * _a) / 255;             \
+                _a    = MIN(src_a, 255 - dest_a);            \
+                src_r = (dest_r * _a) / 255;                 \
+                src_g = (dest_g * _a) / 255;                 \
+                src_b = (dest_b * _a) / 255;                 \
                 break;                                       \
         }                                                    \
                                                              \

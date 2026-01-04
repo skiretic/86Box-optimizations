@@ -655,7 +655,9 @@ voodoo_tmu_fetch_and_blend(voodoo_t *voodoo, voodoo_params_t *params, voodoo_sta
         state->tex_a[0] ^= 0xff;
 }
 
-#if (defined __amd64__ || defined _M_X64)
+#if defined __aarch64__ || defined _M_ARM64
+#    include <86box/vid_voodoo_codegen_arm64.h>
+#elif defined __amd64__ || defined _M_X64
 #    include <86box/vid_voodoo_codegen_x86-64.h>
 #else
 int voodoo_recomp = 0;
@@ -692,7 +694,7 @@ voodoo_half_triangle(voodoo_t *voodoo, voodoo_params_t *params, voodoo_state_t *
 #endif
     int texels;
 #ifndef NO_CODEGEN
-    uint8_t (*voodoo_draw)(voodoo_state_t * state, voodoo_params_t * params, int x, int real_y);
+    uint8_t (*voodoo_draw)(voodoo_state_t *state, voodoo_params_t *params, int x, int real_y);
 #endif
     int y_diff   = SLI_ENABLED ? 2 : 1;
     int y_origin = (voodoo->type >= VOODOO_BANSHEE) ? voodoo->y_origin_swap : (voodoo->v_disp - 1);
@@ -960,10 +962,10 @@ voodoo_half_triangle(voodoo_t *voodoo, voodoo_params_t *params, voodoo_state_t *
                     uint8_t  clocal_g;
                     uint8_t  clocal_b;
                     uint8_t  alocal;
-                    int      src_r = 0;
-                    int      src_g = 0;
-                    int      src_b = 0;
-                    int      src_a = 0;
+                    int      src_r     = 0;
+                    int      src_g     = 0;
+                    int      src_b     = 0;
+                    int      src_a     = 0;
                     int      colbfog_r = 0;
                     int      colbfog_g = 0;
                     int      colbfog_b = 0;
@@ -1343,8 +1345,7 @@ voodoo_half_triangle(voodoo_t *voodoo, voodoo_params_t *params, voodoo_state_t *
                                 aux_mem[x_tiled] = src_a;
                             else
                                 aux_mem[x] = src_a;
-                        }
-                        else if ((params->fbzMode & (FBZ_DEPTH_WMASK | FBZ_DEPTH_ENABLE)) == (FBZ_DEPTH_WMASK | FBZ_DEPTH_ENABLE)) {
+                        } else if ((params->fbzMode & (FBZ_DEPTH_WMASK | FBZ_DEPTH_ENABLE)) == (FBZ_DEPTH_WMASK | FBZ_DEPTH_ENABLE)) {
                             if (voodoo->params.aux_tiled)
                                 aux_mem[x_tiled] = new_depth;
                             else
@@ -1576,7 +1577,7 @@ voodoo_render_log("voodoo_triangle %i %i %i : vA %f, %f  vB %f, %f  vC %f, %f f 
     if (lodbias & 0x20)
         lodbias |= ~0x3f;
     state.tmu[1].lod = LOD + (lodbias << 6);
-    state.stipple = params->stipple;
+    state.stipple    = params->stipple;
 
     voodoo_half_triangle(voodoo, params, &state, vertexAy_adjusted, vertexCy_adjusted, odd_even);
 }

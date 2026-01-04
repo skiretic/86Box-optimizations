@@ -9,6 +9,7 @@
 ## Guidelines
 
 - Update this file after completing each phase or significant milestone
+- For granular, item-by-item progress, use **[port_tasks.md](port_tasks.md)**
 - Record both successes and challenges encountered
 - Note any deviations from the original plan
 - Track performance improvements as they're achieved

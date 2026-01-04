@@ -10,11 +10,15 @@ Complete documentation suite for porting the Voodoo dynamic recompiler to ARM64.
    - Quick reference cheat sheet
    - Migration strategy from x86-64
 
-2. **[port_changelog.md](port_changelog.md)** (237 lines)
-   - Progress tracking template
+2. **[port_changelog.md](port_changelog.md)** (367 lines)
+   - High-level progress tracking
    - Performance metrics log
    - Bug tracking
    - Sign-off checklist
+
+3. **[port_tasks.md](port_tasks.md)** (77 lines)
+   - Granular task breakdown and status
+   - Living document for daily progress tracking
 
 ## Companion Documents
 
@@ -42,9 +46,10 @@ Complete documentation suite for porting the Voodoo dynamic recompiler to ARM64.
 
 1. Read the Quick Reference in Part 0.0 of the main guide
 2. Follow the incremental development strategy in Part 12
-3. Maintain the changelog as you progress
-4. Refer to companion docs as needed
-5. Validate correctness at each phase (Part 13)
+3. Maintain the granular task list in [port_tasks.md](port_tasks.md)
+4. Update the high-level [port_changelog.md](port_changelog.md) as you complete phases
+5. Refer to companion docs as needed
+6. Validate correctness at each phase (Part 13 of the guide)
 
 ## For AI Coding Agents
 
