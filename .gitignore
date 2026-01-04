@@ -70,3 +70,4 @@ build/
 dist/
 perf_logs/
 GEMINI.md
+voodoo_arm64_port_prompt.md
